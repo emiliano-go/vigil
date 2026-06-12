@@ -42,7 +42,7 @@ class Settings:
 
     @property
     def clickhouse_async_url(self) -> str:
-        return self.clickhouse_native_url
+        return self.clickhouse_http_url
 
 
 settings = Settings()
