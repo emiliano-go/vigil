@@ -1,0 +1,18 @@
+{
+  "migration_id": "clickhouse__0002_offline_migration",
+  "operations": [
+    {
+      "type": "create_table",
+      "table": "sync_state",
+      "severity": "INFO"
+    },
+    {
+      "type": "add_foreign_key",
+      "table": "sync_state",
+      "severity": "INFO",
+      "column": "repos(name)"
+    }
+  ],
+  "required_flags": [],
+  "checksum": "f4b087d15456fd0f38275699564aa64f4b12b0424b724772f61304c1d915e34f"
+}

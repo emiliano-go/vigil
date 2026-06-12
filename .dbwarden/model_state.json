@@ -1,6 +1,6 @@
 {
   "format_version": 2,
-  "exported_at": "2026-06-12T04:56:30Z",
+  "exported_at": "2026-06-12T18:43:36Z",
   "dbwarden_version": "0.11.2",
   "tables": {
     "commits": {
@@ -232,6 +232,118 @@
         "ch_object_type": "table",
         "ch_projections": []
       }
+    },
+    "sync_state": {
+      "name": "sync_state",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "NULL",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": "repos(name)",
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "NULL"
+          }
+        },
+        "last_synced_sha": {
+          "name": "last_synced_sha",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          }
+        },
+        "last_synced_at": {
+          "name": "last_synced_at",
+          "type": "DATETIME",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "DateTime64(3)"
+          }
+        },
+        "last_run_status": {
+          "name": "last_run_status",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          }
+        },
+        "last_run_at": {
+          "name": "last_run_at",
+          "type": "DATETIME",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "DateTime64(3)"
+          }
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [
+        {
+          "columns": [
+            "repo"
+          ],
+          "referred_table": "repos",
+          "referred_columns": [
+            "name"
+          ]
+        }
+      ],
+      "checks": [],
+      "uniques": [],
+      "comment": "Sync State",
+      "object_type": "table",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": {
+          "name": "ReplacingMergeTree"
+        },
+        "ch_engine": [
+          "ReplacingMergeTree"
+        ],
+        "ch_order_by": [
+          "repo"
+        ],
+        "ch_primary_key": "repo",
+        "ch_object_type": "table",
+        "ch_projections": []
+      }
     }
   },
   "indexes": {},
@@ -239,6 +351,20 @@
     "commits:foreign_key:0": {
       "type": "foreign_key",
       "table": "commits",
+      "columns": [
+        "repo"
+      ],
+      "referenced_table": "repos",
+      "referenced_columns": [
+        "name"
+      ],
+      "on_delete": "NO ACTION",
+      "on_update": "NO ACTION",
+      "deferrable": false
+    },
+    "sync_state:foreign_key:0": {
+      "type": "foreign_key",
+      "table": "sync_state",
       "columns": [
         "repo"
       ],
