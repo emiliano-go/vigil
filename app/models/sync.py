@@ -10,7 +10,7 @@ from app.core.databases import Base
 class SyncState(Base):
     __tablename__ = "sync_state"
 
-    repo : Mapped[str] = mapped_column(ForeignKey("repos.name"), primary_key=True, nullable=False)
+    repo : Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
     last_synced_sha : Mapped[str] = mapped_column(String, nullable=False)
     last_synced_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_run_status : Mapped[str] = mapped_column(String, nullable=False)
