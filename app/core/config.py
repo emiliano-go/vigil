@@ -15,6 +15,7 @@ class Settings:
     clickhouse_host: str = "localhost"
     clickhouse_http_port: int = 8123
     clickhouse_native_port: int = 9000
+    github_user_token : str = ""
 
     def __init__(self) -> None:
         import os
@@ -25,6 +26,7 @@ class Settings:
         object.__setattr__(self, "clickhouse_host", os.getenv("CLICKHOUSE_HOST", "localhost"))
         object.__setattr__(self, "clickhouse_http_port", int(os.getenv("CLICKHOUSE_HTTP_PORT", "8123")))
         object.__setattr__(self, "clickhouse_native_port", int(os.getenv("CLICKHOUSE_NATIVE_PORT", "9000")))
+        object.__setattr__(self, "github_user_token", os.getenv("GITHUB_TOKEN", ""))
 
     @property
     def clickhouse_http_url(self) -> str:
