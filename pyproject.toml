@@ -9,5 +9,5 @@ dependencies = [
     "pygithub>=2.9.1",
     "python-dotenv>=1.2.2",
     "uvicorn>=0.49.0",
-    "dbwarden>=0.12.4",
+    "dbwarden[clickhouse]>=0.12.4",
 ]
