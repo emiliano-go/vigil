@@ -28,14 +28,14 @@ class RepoSeed(Seed):
 
     model = Repo
     rows = [
-        Repo(name="dbwarden", owner="emiliano-gandini-outeda", is_org=False, default_branch="main"),
-        Repo(name="schemap", owner="emiliano-gandini-outeda", is_org=False, default_branch="master"),
-        Repo(name="crxml", owner="emiliano-gandini-outeda", is_org=False, default_branch="master"),
-        Repo(name="detrack", owner="emiliano-gandini-outeda", is_org=False, default_branch="master"),
-        Repo(name="seoslug", owner="emiliano-gandini-outeda", is_org=False, default_branch="master"),
-        Repo(name="acrresolv", owner="emiliano-gandini-outeda", is_org=False, default_branch="master"),
-        Repo(name="emiliano-gandini-outeda", owner="emiliano-gandini-outeda", is_org=False, default_branch="main"),
-        Repo(name="equinox", owner="emiliano-gandini-outeda", is_org=False, default_branch="main"),
+        Repo(name="dbwarden", owner="emiliano-go", is_org=False, default_branch="main"),
+        Repo(name="schemap", owner="emiliano-go", is_org=False, default_branch="master"),
+        Repo(name="crxml", owner="emiliano-go", is_org=False, default_branch="master"),
+        Repo(name="detrack", owner="emiliano-go", is_org=False, default_branch="master"),
+        Repo(name="seoslug", owner="emiliano-go", is_org=False, default_branch="master"),
+        Repo(name="acrresolv", owner="emiliano-go", is_org=False, default_branch="master"),
+        Repo(name="emiliano-go", owner="emiliano-go", is_org=False, default_branch="main"),
+        Repo(name="equinox", owner="emiliano-go", is_org=False, default_branch="main"),
         Repo(name="ArgosUY", owner="LibreCourseUY", is_org=True, default_branch="main"),
         Repo(name="UruAPI", owner="LibreCourseUY", is_org=True, default_branch="main"),
         Repo(name="web", owner="LibreCourseUY", is_org=True, default_branch="main"),
