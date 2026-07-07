@@ -306,6 +306,21 @@ def hourly_stats(repo: str | None = None):
     return [HourlyActivityOut.model_validate(row) for row in rows]
 
 
+@router.get("/stats/hourly/authors", response_model=list[HourlyActivityOut])
+def hourly_stats_for_author(author_login: str = Query(..., min_length=1), repo: str | None = None):
+    where, params = _stats_where(repo)
+    author_filter, author_params = _author_login_filter(author_login)
+    if author_filter:
+        where = f"{where} AND {author_filter.removeprefix('WHERE ')}" if where else author_filter
+        params.update(author_params)
+
+    rows = _query_dicts(
+        f"SELECT repo, toHour(committed_at) AS hour, count() AS total FROM commits {where} GROUP BY repo, hour ORDER BY repo, hour",
+        params or None,
+    )
+    return [HourlyActivityOut.model_validate(row) for row in rows]
+
+
 @router.get("/stats/hourly/{repo_full_name:path}", response_model=list[HourlyActivityOut])
 def hourly_stats_for_repo(repo_full_name: str):
     return hourly_stats(repo_full_name)
