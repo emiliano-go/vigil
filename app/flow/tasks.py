@@ -4,7 +4,7 @@ import logging
 
 from prefect import get_run_logger, task
 from prefect.exceptions import MissingContextError
-from github import RateLimitExceededException
+from github import GithubException, RateLimitExceededException
 
 from app.services.client import get_clickhouse_client, get_repo_handle, github_session
 from app.services.commits import extract_commit_data
@@ -103,8 +103,14 @@ def fetch_commits(repo_full_name: str, since_datetime: datetime | None):
 
             results = []
 
-            for commit in commits:
-                results.append(extract_commit_data(commit))
+            try:
+                for commit in commits:
+                    results.append(extract_commit_data(commit))
+            except GithubException as exc:
+                if getattr(exc, "status", None) == 409:
+                    log.info(f"{repo_full_name} is empty, skipping commit fetch")
+                    return []
+                raise
 
             log.info(f"{repo_full_name} -> {len(results)} commits fetched (since={since_datetime})")
             return results
