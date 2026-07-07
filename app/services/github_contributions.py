@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
+from functools import lru_cache
 import json
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -49,6 +50,15 @@ def _github_graphql(query: str, variables: dict[str, str]) -> dict:
         raise RuntimeError(f"GitHub GraphQL error: {data['errors']}")
 
     return data["data"]
+
+
+@lru_cache(maxsize=1)
+def get_viewer_login() -> str:
+    data = _github_graphql("query { viewer { login } }", {})
+    viewer = data.get("viewer")
+    if not viewer or not viewer.get("login"):
+        raise RuntimeError("Unable to resolve GitHub viewer login")
+    return viewer["login"]
 
 
 def _streak_from_days(days: list[date], author_login: str) -> ContributionStreak:
@@ -117,3 +127,37 @@ def get_contribution_streak(author_login: str) -> ContributionStreak:
                 days.append(date.fromisoformat(contribution_day["date"]))
 
     return _streak_from_days(days, author_login)
+
+
+def get_total_contributions(author_login: str, start_year: int = 2022) -> int:
+    query = """
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            totalContributions
+          }
+        }
+      }
+    }
+    """
+
+    total = 0
+    current_year = datetime.now(timezone.utc).year
+    for year in range(start_year, current_year + 1):
+        from_dt = datetime(year, 1, 1, tzinfo=timezone.utc)
+        to_dt = datetime.now(timezone.utc) if year == current_year else datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        data = _github_graphql(
+            query,
+            {
+                "login": author_login,
+                "from": from_dt.isoformat().replace("+00:00", "Z"),
+                "to": to_dt.isoformat().replace("+00:00", "Z"),
+            },
+        )
+        user = data.get("user")
+        if not user:
+            raise RuntimeError(f"GitHub user not found: {author_login}")
+        total += int(user["contributionsCollection"]["contributionCalendar"]["totalContributions"])
+
+    return total
