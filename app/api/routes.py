@@ -6,7 +6,12 @@ from pydantic import BaseModel
 from app.core.config import settings
 from app.core.security import enforce_rate_limit, require_api_key
 from app.flow.flow import vigil_sync
-from app.services.github_contributions import get_contribution_streak, get_total_contributions, get_viewer_login
+from app.services.github_contributions import (
+    get_contribution_daily_totals,
+    get_contribution_streak,
+    get_total_contributions,
+    get_viewer_login,
+)
 from app.services.client import get_clickhouse_client
 
 router = APIRouter(prefix="/api", tags=["vigil"], dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)])
@@ -191,6 +196,18 @@ def list_commits(repo: str | None = None, limit: int = Query(default=100, ge=1, 
 
 @router.get("/stats/daily", response_model=DailyStatsOut)
 def daily_stats(repo: str | None = None):
+    if repo is None:
+        try:
+            viewer_login = settings.canonical_author_login(get_viewer_login())
+            totals = get_contribution_daily_totals(viewer_login, start_year=2022)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+        return DailyStatsOut(
+            total=[PeriodTotalOut.model_validate(item.__dict__) for item in sorted(totals, key=lambda item: item.period, reverse=True)],
+            by_repo=[],
+        )
+
     where, params = _stats_where(repo)
     totals = _query_dicts(
         f"SELECT day AS period, sum(total) AS total FROM commits_per_day {where} GROUP BY day ORDER BY period DESC",

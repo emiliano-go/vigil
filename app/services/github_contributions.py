@@ -11,6 +11,7 @@ from app.core.config import settings
 
 
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
+GITHUB_GRAPHQL_TIMEOUT_SECONDS = 60
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,12 @@ class ContributionStreak:
     longest_streak: int
     last_active_day: date | None
     active_days: int
+
+
+@dataclass(frozen=True)
+class DailyContribution:
+    period: date
+    total: int
 
 
 def _github_graphql(query: str, variables: dict[str, str]) -> dict:
@@ -40,7 +47,7 @@ def _github_graphql(query: str, variables: dict[str, str]) -> dict:
     )
 
     try:
-        with urlopen(request, timeout=20) as response:
+        with urlopen(request, timeout=GITHUB_GRAPHQL_TIMEOUT_SECONDS) as response:
             body = response.read().decode("utf-8")
     except (HTTPError, URLError) as exc:
         raise RuntimeError(f"GitHub GraphQL request failed: {exc}") from exc
@@ -161,3 +168,51 @@ def get_total_contributions(author_login: str, start_year: int = 2022) -> int:
         total += int(user["contributionsCollection"]["contributionCalendar"]["totalContributions"])
 
     return total
+
+
+def get_contribution_daily_totals(author_login: str, start_year: int = 2022) -> list[DailyContribution]:
+    query = """
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    daily: list[DailyContribution] = []
+    current_year = datetime.now(timezone.utc).year
+    for year in range(start_year, current_year + 1):
+        from_dt = datetime(year, 1, 1, tzinfo=timezone.utc)
+        to_dt = datetime.now(timezone.utc) if year == current_year else datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        data = _github_graphql(
+            query,
+            {
+                "login": author_login,
+                "from": from_dt.isoformat().replace("+00:00", "Z"),
+                "to": to_dt.isoformat().replace("+00:00", "Z"),
+            },
+        )
+        user = data.get("user")
+        if not user:
+            raise RuntimeError(f"GitHub user not found: {author_login}")
+
+        weeks = user["contributionsCollection"]["contributionCalendar"]["weeks"]
+        for week in weeks:
+            for contribution_day in week["contributionDays"]:
+                daily.append(
+                    DailyContribution(
+                        period=date.fromisoformat(contribution_day["date"]),
+                        total=int(contribution_day["contributionCount"]),
+                    )
+                )
+
+    return daily
