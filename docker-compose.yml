@@ -39,6 +39,7 @@ services:
       CLICKHOUSE_PORT: 8123
       CLICKHOUSE_NATIVE_PORT: 9000
       PREFECT_API_URL: http://prefect-server:4200/api
+      VIGIL_IN_CONTAINER: "1"
       PORT: 8000
     depends_on:
       - clickhouse
