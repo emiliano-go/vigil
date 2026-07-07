@@ -184,8 +184,16 @@ def read_sync_state(repo_full_name: str):
 
 
 @router.get("/commits", response_model=list[CommitOut])
-def list_commits(repo: str | None = None, limit: int = Query(default=100, ge=1, le=1000)):
+def list_commits(
+    repo: str | None = None,
+    author_login: str | None = None,
+    limit: int = Query(default=100, ge=1, le=1000),
+):
     where, params = _stats_where(repo)
+    author_filter, author_params = _author_login_filter(author_login)
+    if author_filter:
+        where = f"{where} AND {author_filter.removeprefix('WHERE ')}" if where else author_filter
+        params.update(author_params)
     rows = _query_dicts(
         f"SELECT repo, sha, author_login, author_name, author_email, message, is_merge, committed_at "
         f"FROM commits {where} ORDER BY committed_at DESC LIMIT {limit}",
