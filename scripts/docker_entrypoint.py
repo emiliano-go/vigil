@@ -36,6 +36,7 @@ def main() -> None:
     _wait_for_dependencies()
 
     subprocess.run(["dbwarden", "migrate"], check=True)
+    subprocess.run(["uv", "run", "python", "scripts/backfill_author_commit_days.py"], check=True)
 
     root_path = os.environ.get("ROOT_PATH", "").strip()
     uvicorn_args = [

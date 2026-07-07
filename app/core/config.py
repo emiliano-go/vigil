@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,6 +21,7 @@ class Settings:
     root_path: str = ""
     api_key: str = ""
     rate_limit: str = "60/minute"
+    author_login_canonical_map: dict[str, str] = None  # type: ignore[assignment]
 
     def __init__(self) -> None:
         import os
@@ -35,6 +37,7 @@ class Settings:
         object.__setattr__(self, "root_path", os.getenv("ROOT_PATH", ""))
         object.__setattr__(self, "api_key", os.getenv("API_KEY", ""))
         object.__setattr__(self, "rate_limit", os.getenv("RATE_LIMIT", "60/minute"))
+        object.__setattr__(self, "author_login_canonical_map", self._load_login_map(os.getenv("AUTHOR_LOGIN_CANONICAL_MAP", "{}")))
 
     @property
     def clickhouse_http_url(self) -> str:
@@ -56,6 +59,40 @@ class Settings:
             f"http://{self.clickhouse_user}:{self.clickhouse_password}"
             f"@{self.clickhouse_host}:{self.clickhouse_port}/{self.clickhouse_db}"
         )
+
+    @staticmethod
+    def _load_login_map(raw: str) -> dict[str, str]:
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return {}
+
+        if not isinstance(data, dict):
+            return {}
+
+        return {str(alias): str(canonical) for alias, canonical in data.items() if alias and canonical}
+
+    def canonical_author_login(self, author_login: str) -> str:
+        return self.author_login_canonical_map.get(author_login, author_login)
+
+    def author_login_aliases(self, author_login: str) -> list[str]:
+        canonical = self.canonical_author_login(author_login)
+        aliases = [alias for alias, mapped in self.author_login_canonical_map.items() if mapped == canonical]
+        if canonical not in aliases:
+            aliases.append(canonical)
+        return aliases
+
+    def canonical_author_login_expr(self, column: str = "author_login") -> str:
+        if not self.author_login_canonical_map:
+            return column
+
+        clauses: list[str] = []
+        for alias, canonical in self.author_login_canonical_map.items():
+            clauses.append(f"{column} = '{alias}'")
+            clauses.append(f"'{canonical}'")
+
+        pairs = ", ".join(clauses)
+        return f"multiIf({pairs}, {column})"
 
 
 settings = Settings()

@@ -3,8 +3,10 @@ from datetime import date, datetime
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 
+from app.core.config import settings
 from app.core.security import enforce_rate_limit, require_api_key
 from app.flow.flow import vigil_sync
+from app.services.github_contributions import get_contribution_streak
 from app.services.client import get_clickhouse_client
 
 router = APIRouter(prefix="/api", tags=["vigil"], dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)])
@@ -80,6 +82,26 @@ class AuthorStreakOut(BaseModel):
     longest_streak: int
     last_active_day: date | None
     active_days: int
+
+
+class AuthorPeriodTotalOut(BaseModel):
+    period: date
+    author_login: str
+    total: int
+
+
+class DailyAuthorStatsOut(BaseModel):
+    total: list[PeriodTotalOut]
+    by_author: list[AuthorPeriodTotalOut]
+
+def _author_login_filter(author_login: str | None) -> tuple[str, dict[str, str]]:
+    if not author_login:
+        return "", {}
+    aliases = settings.author_login_aliases(author_login)
+    if len(aliases) == 1:
+        return "WHERE author_login = %(author_login)s", {"author_login": aliases[0]}
+    quoted_aliases = ", ".join(f"'{alias}'" for alias in aliases)
+    return f"WHERE author_login IN ({quoted_aliases})", {}
 
 
 class OverviewOut(BaseModel):
@@ -189,6 +211,29 @@ def daily_stats_for_repo(repo_full_name: str):
     return daily_stats(repo_full_name)
 
 
+@router.get("/stats/daily/authors", response_model=DailyAuthorStatsOut)
+def daily_author_stats(days: int = Query(default=7, ge=1, le=365), author_login: str | None = None):
+    params: dict[str, int | str] = {"days": days}
+    where = "WHERE day >= today() - %(days)s"
+    author_filter, author_params = _author_login_filter(author_login)
+    if author_filter:
+        where += f" AND {author_filter.removeprefix('WHERE ')}"
+        params.update(author_params)
+
+    totals = _query_dicts(
+        f"SELECT day AS period, sum(total) AS total FROM author_commit_days {where} GROUP BY day ORDER BY period DESC",
+        params,
+    )
+    by_author = _query_dicts(
+        f"SELECT day AS period, {settings.canonical_author_login_expr()} AS author_login, sum(total) AS total FROM author_commit_days {where} GROUP BY period, author_login ORDER BY period DESC, author_login",
+        params,
+    )
+    return DailyAuthorStatsOut(
+        total=[PeriodTotalOut.model_validate(row) for row in totals],
+        by_author=[AuthorPeriodTotalOut.model_validate(row) for row in by_author],
+    )
+
+
 @router.get("/stats/monthly", response_model=MonthlyStatsOut)
 def monthly_stats(repo: str | None = None):
     where, params = _stats_where(repo)
@@ -215,7 +260,7 @@ def monthly_stats_for_repo(repo_full_name: str):
 def author_stats(repo: str | None = None):
     where, params = _stats_where(repo)
     rows = _query_dicts(
-        f"SELECT repo, author_login, total FROM author_commit_counts {where} ORDER BY total DESC, repo, author_login",
+        f"SELECT repo, {settings.canonical_author_login_expr()} AS author_login, sum(total) AS total FROM author_commit_counts {where} GROUP BY repo, author_login ORDER BY total DESC, repo, author_login",
         params or None,
     )
     return [AuthorCommitCountOut.model_validate(row) for row in rows]
@@ -308,7 +353,7 @@ def merge_ratio(repo: str | None = None):
 @router.get("/stats/overview", response_model=OverviewOut)
 def overview_stats():
     totals = _query_dicts(
-        "SELECT count() AS total_commits, uniqExactIf(author_login, author_login != '') AS total_authors FROM commits"
+        f"SELECT count() AS total_commits, uniqExactIf({settings.canonical_author_login_expr()}, {settings.canonical_author_login_expr()} != '') AS total_authors FROM commits"
     )
     repos = _query_dicts("SELECT count() AS total_repos FROM repos")
     busiest_day = _query_dicts(
@@ -362,44 +407,9 @@ def activity_range(
 
 @router.get("/stats/streak/{author_login}", response_model=AuthorStreakOut)
 def author_streak(author_login: str):
-    rows = _query_dicts(
-        """
-        WITH daily AS (
-            SELECT
-                day,
-                toRelativeDayNum(day) - row_number() OVER (ORDER BY day) AS streak_group
-            FROM (
-                SELECT day
-                FROM author_commit_days
-                WHERE author_login = %(author_login)s
-                GROUP BY day
-            )
-        ),
-        streaks AS (
-            SELECT streak_group, count() AS streak_len
-            FROM daily
-            GROUP BY streak_group
-        ),
-        current_group AS (
-            SELECT streak_group
-            FROM daily
-            ORDER BY day DESC
-            LIMIT 1
-        )
-        SELECT
-            %(author_login)s AS author_login,
-            ifNull((SELECT max(streak_len) FROM streaks), 0) AS longest_streak,
-            ifNull((SELECT streak_len FROM streaks WHERE streak_group = (SELECT streak_group FROM current_group) LIMIT 1), 0) AS current_streak,
-            (SELECT max(day) FROM daily) AS last_active_day,
-            ifNull((SELECT count() FROM daily), 0) AS active_days
-        """,
-        {"author_login": author_login},
-    )
-    row = rows[0] if rows else {
-        "author_login": author_login,
-        "current_streak": 0,
-        "longest_streak": 0,
-        "last_active_day": None,
-        "active_days": 0,
-    }
-    return AuthorStreakOut.model_validate(row)
+    try:
+        streak = get_contribution_streak(settings.canonical_author_login(author_login))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return AuthorStreakOut.model_validate(streak.__dict__)
