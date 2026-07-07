@@ -74,6 +74,14 @@ class MergeRatioOut(BaseModel):
     merge_ratio: float
 
 
+class AuthorStreakOut(BaseModel):
+    author_login: str
+    current_streak: int
+    longest_streak: int
+    last_active_day: date | None
+    active_days: int
+
+
 class OverviewOut(BaseModel):
     total_commits: int
     total_repos: int
@@ -350,3 +358,48 @@ def activity_range(
         params or None,
     )
     return [CommitOut.model_validate(row) for row in rows]
+
+
+@router.get("/stats/streak/{author_login}", response_model=AuthorStreakOut)
+def author_streak(author_login: str):
+    rows = _query_dicts(
+        """
+        WITH daily AS (
+            SELECT
+                day,
+                toRelativeDayNum(day) - row_number() OVER (ORDER BY day) AS streak_group
+            FROM (
+                SELECT day
+                FROM author_commit_days
+                WHERE author_login = %(author_login)s
+                GROUP BY day
+            )
+        ),
+        streaks AS (
+            SELECT streak_group, count() AS streak_len
+            FROM daily
+            GROUP BY streak_group
+        ),
+        current_group AS (
+            SELECT streak_group
+            FROM daily
+            ORDER BY day DESC
+            LIMIT 1
+        )
+        SELECT
+            %(author_login)s AS author_login,
+            ifNull((SELECT max(streak_len) FROM streaks), 0) AS longest_streak,
+            ifNull((SELECT streak_len FROM streaks WHERE streak_group = (SELECT streak_group FROM current_group) LIMIT 1), 0) AS current_streak,
+            (SELECT max(day) FROM daily) AS last_active_day,
+            ifNull((SELECT count() FROM daily), 0) AS active_days
+        """,
+        {"author_login": author_login},
+    )
+    row = rows[0] if rows else {
+        "author_login": author_login,
+        "current_streak": 0,
+        "longest_streak": 0,
+        "last_active_day": None,
+        "active_days": 0,
+    }
+    return AuthorStreakOut.model_validate(row)

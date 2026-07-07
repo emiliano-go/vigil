@@ -1,6 +1,6 @@
 {
-  "format_version": 2,
-  "exported_at": "2026-07-07T19:00:17Z",
+  "format_version": 1,
+  "exported_at": "2026-07-07T18:58:02Z",
   "dbwarden_version": "0.12.5",
   "tables": {
     "commits_per_day": {
@@ -1165,5 +1165,10 @@
   },
   "indexes": {},
   "constraints": {},
-  "enums": {}
+  "enums": {},
+  "migration_id": "clickhouse__0005_add_author_streak_table",
+  "database_name": "default",
+  "database_type": "clickhouse",
+  "applied_at": "2026-07-07T18:58:02Z",
+  "checksum": "d4a0de88d0f4a4a9e21eeebe70598aaabc810705ecbe08995e4e100f77f7e672"
 }

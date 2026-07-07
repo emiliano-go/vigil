@@ -1,5 +1,7 @@
 from app.models.agg import (
     AuthorCommitCounts,
+    AuthorCommitDays,
+    AuthorCommitDaysMV,
     AuthorCommitCountsMV,
     CommitsPerDay,
     CommitsPerDayMV,

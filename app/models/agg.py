@@ -139,3 +139,36 @@ class HourlyActivityMV(Base):
             "FROM commits GROUP BY repo, hour"
         )
         comment = "Materialized view for hourly activity"
+
+
+@auto_schema
+class AuthorCommitDays(Base):
+    __tablename__ = "author_commit_days"
+
+    author_login: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
+    day: Mapped[date] = mapped_column(Date, primary_key=True, nullable=False)
+    total: Mapped[int] = mapped_column(BigInteger, nullable=False)
+
+    class Meta(CHTableMeta):
+        ch_engine = summing_merge_tree("total")
+        ch_order_by = ["author_login", "day"]
+        ch_primary_key = ["author_login", "day"]
+        comment = "Daily commit counts per author"
+
+
+@auto_schema
+class AuthorCommitDaysMV(Base):
+    __tablename__ = "author_commit_days_mv"
+
+    author_login: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
+    day: Mapped[date] = mapped_column(Date, primary_key=True, nullable=False)
+    total: Mapped[int] = mapped_column(BigInteger, primary_key=True, nullable=False)
+
+    class Meta(CHTableMeta):
+        ch_object_type = "materialized_view"
+        ch_to_table = "author_commit_days"
+        ch_select_statement = (
+            "SELECT author_login, toDate(committed_at) AS day, count() AS total "
+            "FROM commits GROUP BY author_login, day"
+        )
+        comment = "Materialized view for daily author commit counts"
