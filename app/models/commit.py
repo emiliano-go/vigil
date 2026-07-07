@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Boolean, DateTime, String
 from datetime import datetime
-from dbwarden.schema import auto_schema
+from dbwarden.schema._auto_schema import auto_schema
 from dbwarden import CHTableMeta, ChEngineSpec
 
 from app.core.databases import Base

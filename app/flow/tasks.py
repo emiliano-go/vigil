@@ -12,13 +12,12 @@ from app.models.commit import Commit
 
 @dataclass(frozen=True)
 class RepoRecord:
+    full_name: str
     name: str
     owner: str
+    is_org: bool
+    private: bool
     default_branch: str
-
-    @property
-    def full_name(self) -> str:
-        return f"{self.owner}/{self.name}"
 
 
 def _get_logger():
@@ -27,33 +26,56 @@ def _get_logger():
     except MissingContextError:
         return logging.getLogger("vigil")
 
-@task
-def load_active_repos():
+@task(retries=3, retry_delay_seconds=[10, 30, 90])
+def repo_indexing():
     log = _get_logger()
 
+    with github_session() as gh:
+        try:
+            github_repos = list(gh.get_user().get_repos())
+        except RateLimitExceededException:
+            reset_time = gh.get_rate_limit().core.reset
+            log.warning(f"Rate limit hit while indexing repos, resets at {reset_time}: letting Prefect retry")
+            raise
+
+    repos = [
+        RepoRecord(
+            full_name=repo.full_name,
+            name=repo.name,
+            owner=repo.owner.login,
+            is_org=getattr(repo.owner, "type", "") == "Organization",
+            private=bool(repo.private),
+            default_branch=repo.default_branch or "main",
+        )
+        for repo in github_repos
+    ]
+    repos.sort(key=lambda item: item.full_name)
+
     client = get_clickhouse_client()
+    columns = ["full_name", "name", "owner", "is_org", "private", "default_branch"]
 
     try:
-        result = client.query(
-            "SELECT name, owner, default_branch FROM repos"
-        )
-    
+        client.command("TRUNCATE TABLE repos")
+        rows = [
+            (repo.full_name, repo.name, repo.owner, repo.is_org, repo.private, repo.default_branch)
+            for repo in repos
+        ]
+        if rows:
+            client.insert("repos", data=rows, column_names=columns)
+        log.info(f"Indexed {len(rows)} repos from GitHub")
     finally:
         client.close()
-    
-    repos = [RepoRecord(name=row[0], owner=row[1], default_branch=row[2]) for row in result.result_rows]
-    
-    log.info(f"Loaded {len(repos)} active repos")
+
     return repos
 
 @task
-def get_sync_state(repo_name: str):
+def get_sync_state(repo_full_name: str):
     client = get_clickhouse_client()
 
     try:
         result = client.query(
             "SELECT last_synced_at, last_synced_sha FROM sync_state WHERE repo = %(repo)s",
-            parameters={"repo": repo_name},
+            parameters={"repo": repo_full_name},
         )
 
         if result.result_rows:
@@ -94,9 +116,9 @@ def fetch_commits(repo_full_name: str, since_datetime: datetime | None):
 
 
 @task
-def transform_commit(raw_commit, repo_name):
+def transform_commit(raw_commit, repo_full_name):
     return Commit.Schema(
-        repo=repo_name,
+        repo=repo_full_name,
         sha=raw_commit["sha"],
         author_name=raw_commit["author_name"],
         author_email=raw_commit["author_email"],

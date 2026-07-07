@@ -9,5 +9,5 @@ from app.models.agg import (
     HourlyActivityMV,
 )
 from app.models.commit import Commit
-from app.models.repo import Repo, RepoSeed
+from app.models.repo import Repo
 from app.models.sync import SyncState

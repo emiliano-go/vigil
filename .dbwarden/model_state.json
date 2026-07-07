@@ -1,7 +1,7 @@
 {
   "format_version": 2,
-  "exported_at": "2026-07-07T14:51:39Z",
-  "dbwarden_version": "0.12.4",
+  "exported_at": "2026-07-07T16:18:07Z",
+  "dbwarden_version": "0.12.5",
   "tables": {
     "commits": {
       "name": "commits",
@@ -157,7 +157,8 @@
         "ch_primary_key": "repo",
         "ch_object_type": "table",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "sync_state": {
       "name": "sync_state",
@@ -264,16 +265,33 @@
         "ch_primary_key": "repo",
         "ch_object_type": "table",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "repos": {
       "name": "repos",
       "columns": {
+        "full_name": {
+          "name": "full_name",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
         "name": {
           "name": "name",
           "type": "VARCHAR",
           "nullable": false,
-          "primary_key": true,
+          "primary_key": false,
           "unique": null,
           "default": null,
           "foreign_key": null,
@@ -303,6 +321,22 @@
         },
         "is_org": {
           "name": "is_org",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Bool"
+          },
+          "my_column": {}
+        },
+        "private": {
+          "name": "private",
           "type": "BOOLEAN",
           "nullable": false,
           "primary_key": false,
@@ -350,12 +384,13 @@
           "ReplacingMergeTree"
         ],
         "ch_order_by": [
-          "name"
+          "full_name"
         ],
-        "ch_primary_key": "name",
+        "ch_primary_key": "full_name",
         "ch_object_type": "table",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "commits_per_day": {
       "name": "commits_per_day",
@@ -438,7 +473,8 @@
         ],
         "ch_object_type": "table",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "commits_per_day_mv": {
       "name": "commits_per_day_mv",
@@ -507,7 +543,8 @@
         "ch_select_statement": "SELECT repo, toDate(committed_at) AS day, count() AS total FROM commits GROUP BY repo, day",
         "ch_to_table": "commits_per_day",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "commits_per_month": {
       "name": "commits_per_month",
@@ -590,7 +627,8 @@
         ],
         "ch_object_type": "table",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "commits_per_month_mv": {
       "name": "commits_per_month_mv",
@@ -659,7 +697,8 @@
         "ch_select_statement": "SELECT repo, toStartOfMonth(committed_at) AS month, count() AS total FROM commits GROUP BY repo, month",
         "ch_to_table": "commits_per_month",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "author_commit_counts": {
       "name": "author_commit_counts",
@@ -742,7 +781,8 @@
         ],
         "ch_object_type": "table",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "author_commit_counts_mv": {
       "name": "author_commit_counts_mv",
@@ -811,7 +851,8 @@
         "ch_select_statement": "SELECT repo, author_login, count() AS total FROM commits GROUP BY repo, author_login",
         "ch_to_table": "author_commit_counts",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "hourly_activity": {
       "name": "hourly_activity",
@@ -894,7 +935,8 @@
         ],
         "ch_object_type": "table",
         "ch_projections": []
-      }
+      },
+      "schema": null
     },
     "hourly_activity_mv": {
       "name": "hourly_activity_mv",
@@ -963,10 +1005,12 @@
         "ch_select_statement": "SELECT repo, toHour(committed_at) AS hour, count() AS total FROM commits GROUP BY repo, hour",
         "ch_to_table": "hourly_activity",
         "ch_projections": []
-      }
+      },
+      "schema": null
     }
   },
   "indexes": {},
   "constraints": {},
-  "enums": {}
+  "enums": {},
+  "database": "default"
 }

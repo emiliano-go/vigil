@@ -2,7 +2,7 @@ from datetime import date
 
 from dbwarden import CHTableMeta
 from dbwarden.databases import summing_merge_tree
-from dbwarden.schema import auto_schema
+from dbwarden.schema._auto_schema import auto_schema
 from sqlalchemy import BigInteger, Date, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 

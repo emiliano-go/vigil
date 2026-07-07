@@ -28,6 +28,26 @@ services:
     volumes:
       - prefect_data:/root/.prefect
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vigil-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_NATIVE_PORT: 9000
+      PREFECT_API_URL: http://prefect-server:4200/api
+      PORT: 8000
+    depends_on:
+      - clickhouse
+      - prefect-server
+    ports:
+      - "127.0.0.1:8000:8000"
+
 volumes:
   clickhouse_data:
   prefect_data:

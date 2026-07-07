@@ -16,6 +16,7 @@ class Settings:
     clickhouse_port: int = 8123
     clickhouse_native_port: int = 9000
     github_user_token: str = ""
+    prefect_api_url: str = ""
     api_key: str = ""
     rate_limit: str = "60/minute"
 
@@ -29,6 +30,7 @@ class Settings:
         object.__setattr__(self, "clickhouse_port", int(os.getenv("CLICKHOUSE_PORT", "8123")))
         object.__setattr__(self, "clickhouse_native_port", int(os.getenv("CLICKHOUSE_NATIVE_PORT", "9000")))
         object.__setattr__(self, "github_user_token", os.getenv("GITHUB_TOKEN", ""))
+        object.__setattr__(self, "prefect_api_url", os.getenv("PREFECT_API_URL", ""))
         object.__setattr__(self, "api_key", os.getenv("API_KEY", ""))
         object.__setattr__(self, "rate_limit", os.getenv("RATE_LIMIT", "60/minute"))
 

@@ -28,5 +28,5 @@ def get_clickhouse_client():
         password=settings.clickhouse_password,
         database=settings.clickhouse_db,
         connect_timeout=10,
-        settings={"async_insert": 1},
+        settings={"async_insert": 1, "wait_for_async_insert": 1},
     )

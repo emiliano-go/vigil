@@ -1,0 +1,1911 @@
+{
+  "format_version": 1,
+  "migration_id": "clickhouse__0004_reindex_repos_full_name",
+  "database_name": "default",
+  "database_type": "clickhouse",
+  "applied_at": "2026-07-07T16:18:07Z",
+  "tables": {
+    "_dbwarden_migrations": {
+      "object_type": "table",
+      "columns": {
+        "version": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "description": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "filename": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "migration_type": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "applied_at": {
+          "type": "DateTime",
+          "nullable": false,
+          "primary_key": false,
+          "default": "now()",
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": "now()",
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "DateTime"
+          }
+        },
+        "checksum": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        }
+      },
+      "primary_key": [
+        "filename"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree ORDER BY filename SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "MergeTree ORDER BY filename SETTINGS index_granularity = 8192",
+        "ch_order_by": "filename",
+        "ch_primary_key": "filename",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree ORDER BY filename SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "MergeTree ORDER BY filename SETTINGS index_granularity = 8192",
+        "ch_order_by": "filename",
+        "ch_primary_key": "filename",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "_dbwarden_seeds": {
+      "object_type": "table",
+      "columns": {
+        "version": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "description": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "filename": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "seed_type": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "applied_at": {
+          "type": "DateTime",
+          "nullable": false,
+          "primary_key": false,
+          "default": "now()",
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": "now()",
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "DateTime"
+          }
+        },
+        "checksum": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        }
+      },
+      "primary_key": [
+        "version"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree ORDER BY version SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "MergeTree ORDER BY version SETTINGS index_granularity = 8192",
+        "ch_order_by": "version",
+        "ch_primary_key": "version",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree ORDER BY version SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "MergeTree ORDER BY version SETTINGS index_granularity = 8192",
+        "ch_order_by": "version",
+        "ch_primary_key": "version",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "author_commit_counts": {
+      "object_type": "table",
+      "columns": {
+        "author_login": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [
+        "repo, author_login"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "author_login) ORDER BY (repo",
+            "author_login) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "author_login) ORDER BY (repo",
+          "author_login) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, author_login",
+        "ch_primary_key": "repo, author_login",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "author_login) ORDER BY (repo",
+            "author_login) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "author_login) ORDER BY (repo",
+          "author_login) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, author_login",
+        "ch_primary_key": "repo, author_login",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "author_commit_counts_mv": {
+      "object_type": "materialized_view",
+      "columns": {
+        "author_login": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, author_login, count() AS total FROM default.commits GROUP BY repo, author_login",
+        "ch_to_table": "default.author_commit_counts",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, author_login, count() AS total FROM default.commits GROUP BY repo, author_login",
+        "ch_to_table": "default.author_commit_counts",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "commits": {
+      "object_type": "table",
+      "columns": {
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "sha": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "author_login": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "author_name": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "author_email": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "message": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "committed_at": {
+          "type": "DateTime64(3)",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "DateTime64(3)"
+          }
+        },
+        "is_merge": {
+          "type": "Bool",
+          "nullable": false,
+          "primary_key": false,
+          "default": "false",
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": "false",
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Bool"
+          }
+        }
+      },
+      "primary_key": [
+        "repo"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree PRIMARY KEY repo ORDER BY",
+          "args": [
+            "repo",
+            "committed_at) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "MergeTree PRIMARY KEY repo ORDER BY",
+          "repo",
+          "committed_at) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, committed_at",
+        "ch_primary_key": "repo",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree PRIMARY KEY repo ORDER BY",
+          "args": [
+            "repo",
+            "committed_at) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "MergeTree PRIMARY KEY repo ORDER BY",
+          "repo",
+          "committed_at) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, committed_at",
+        "ch_primary_key": "repo",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "commits_per_day": {
+      "object_type": "table",
+      "columns": {
+        "day": {
+          "type": "Date",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Date"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [
+        "repo, day"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "day) ORDER BY (repo",
+            "day) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "day) ORDER BY (repo",
+          "day) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, day",
+        "ch_primary_key": "repo, day",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "day) ORDER BY (repo",
+            "day) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "day) ORDER BY (repo",
+          "day) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, day",
+        "ch_primary_key": "repo, day",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "commits_per_day_mv": {
+      "object_type": "materialized_view",
+      "columns": {
+        "day": {
+          "type": "Date",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Date"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toDate(committed_at) AS day, count() AS total FROM default.commits GROUP BY repo, day",
+        "ch_to_table": "default.commits_per_day",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toDate(committed_at) AS day, count() AS total FROM default.commits GROUP BY repo, day",
+        "ch_to_table": "default.commits_per_day",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "commits_per_month": {
+      "object_type": "table",
+      "columns": {
+        "month": {
+          "type": "Date",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Date"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [
+        "repo, month"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "month) ORDER BY (repo",
+            "month) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "month) ORDER BY (repo",
+          "month) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, month",
+        "ch_primary_key": "repo, month",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "month) ORDER BY (repo",
+            "month) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "month) ORDER BY (repo",
+          "month) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, month",
+        "ch_primary_key": "repo, month",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "commits_per_month_mv": {
+      "object_type": "materialized_view",
+      "columns": {
+        "month": {
+          "type": "Date",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Date"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toStartOfMonth(committed_at) AS month, count() AS total FROM default.commits GROUP BY repo, month",
+        "ch_to_table": "default.commits_per_month",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toStartOfMonth(committed_at) AS month, count() AS total FROM default.commits GROUP BY repo, month",
+        "ch_to_table": "default.commits_per_month",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "dbwarden_lock": {
+      "object_type": "table",
+      "columns": {
+        "id": {
+          "type": "Int32",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int32"
+          }
+        },
+        "locked": {
+          "type": "UInt8",
+          "nullable": false,
+          "primary_key": false,
+          "default": "0",
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": "0",
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "UInt8"
+          }
+        },
+        "acquired_at": {
+          "type": "Nullable(DateTime)",
+          "nullable": true,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": true,
+            "ch_type": "Nullable(DateTime)"
+          }
+        }
+      },
+      "primary_key": [
+        "id"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree ORDER BY id SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "MergeTree ORDER BY id SETTINGS index_granularity = 8192",
+        "ch_order_by": "id",
+        "ch_primary_key": "id",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MergeTree ORDER BY id SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "MergeTree ORDER BY id SETTINGS index_granularity = 8192",
+        "ch_order_by": "id",
+        "ch_primary_key": "id",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "hourly_activity": {
+      "object_type": "table",
+      "columns": {
+        "hour": {
+          "type": "Int32",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int32"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [
+        "repo, hour"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "hour) ORDER BY (repo",
+            "hour) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "hour) ORDER BY (repo",
+          "hour) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, hour",
+        "ch_primary_key": "repo, hour",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total) PRIMARY KEY (repo",
+            "hour) ORDER BY (repo",
+            "hour) SETTINGS index_granularity = 8192"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total) PRIMARY KEY (repo",
+          "hour) ORDER BY (repo",
+          "hour) SETTINGS index_granularity = 8192"
+        ],
+        "ch_order_by": "repo, hour",
+        "ch_primary_key": "repo, hour",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "hourly_activity_mv": {
+      "object_type": "materialized_view",
+      "columns": {
+        "hour": {
+          "type": "Int32",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int32"
+          }
+        },
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "total": {
+          "type": "Int64",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Int64"
+          }
+        }
+      },
+      "primary_key": [],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toHour(committed_at) AS hour, count() AS total FROM default.commits GROUP BY repo, hour",
+        "ch_to_table": "default.hourly_activity",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "MaterializedView"
+        },
+        "ch_engine": "MaterializedView",
+        "ch_order_by": null,
+        "ch_primary_key": null,
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": null,
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toHour(committed_at) AS hour, count() AS total FROM default.commits GROUP BY repo, hour",
+        "ch_to_table": "default.hourly_activity",
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "repos": {
+      "object_type": "table",
+      "columns": {
+        "full_name": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "name": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "owner": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "is_org": {
+          "type": "Bool",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Bool"
+          }
+        },
+        "private": {
+          "type": "Bool",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "Bool"
+          }
+        },
+        "default_branch": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        }
+      },
+      "primary_key": [
+        "full_name"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "ReplacingMergeTree PRIMARY KEY full_name ORDER BY full_name SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "ReplacingMergeTree PRIMARY KEY full_name ORDER BY full_name SETTINGS index_granularity = 8192",
+        "ch_order_by": "full_name",
+        "ch_primary_key": "full_name",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "ReplacingMergeTree PRIMARY KEY full_name ORDER BY full_name SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "ReplacingMergeTree PRIMARY KEY full_name ORDER BY full_name SETTINGS index_granularity = 8192",
+        "ch_order_by": "full_name",
+        "ch_primary_key": "full_name",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    },
+    "sync_state": {
+      "object_type": "table",
+      "columns": {
+        "repo": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": true,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "last_synced_sha": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "last_synced_at": {
+          "type": "DateTime64(3)",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "DateTime64(3)"
+          }
+        },
+        "last_run_status": {
+          "type": "String",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "String"
+          }
+        },
+        "last_run_at": {
+          "type": "DateTime64(3)",
+          "nullable": false,
+          "primary_key": false,
+          "default": null,
+          "comment": "",
+          "ch_column": {
+            "ch_codec": null,
+            "ch_default_expression": null,
+            "ch_materialized": null,
+            "ch_alias": null,
+            "ch_ttl": null,
+            "ch_low_cardinality": false,
+            "ch_nullable": false,
+            "ch_type": "DateTime64(3)"
+          }
+        }
+      },
+      "primary_key": [
+        "repo"
+      ],
+      "comment": null,
+      "indexes": [],
+      "ch_options": {
+        "ch_engine_raw": {
+          "name": "ReplacingMergeTree PRIMARY KEY repo ORDER BY repo SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "ReplacingMergeTree PRIMARY KEY repo ORDER BY repo SETTINGS index_granularity = 8192",
+        "ch_order_by": "repo",
+        "ch_primary_key": "repo",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      },
+      "clickhouse_options": {
+        "ch_engine_raw": {
+          "name": "ReplacingMergeTree PRIMARY KEY repo ORDER BY repo SETTINGS index_granularity = 8192"
+        },
+        "ch_engine": "ReplacingMergeTree PRIMARY KEY repo ORDER BY repo SETTINGS index_granularity = 8192",
+        "ch_order_by": "repo",
+        "ch_primary_key": "repo",
+        "ch_partition_by": null,
+        "ch_sample_by": null,
+        "ch_ttl": [],
+        "ch_settings": {
+          "index_granularity": "8192"
+        },
+        "ch_object_type": "table",
+        "ch_select_statement": null,
+        "ch_to_table": null,
+        "ch_dictionary": false,
+        "ch_dict_layout": null,
+        "ch_dict_source": null,
+        "ch_dict_lifetime": null,
+        "ch_dict_primary_key": null,
+        "ch_projections": [],
+        "ch_zookeeper_path": null,
+        "ch_replica_name": null
+      }
+    }
+  },
+  "enums": {},
+  "indexes": {},
+  "constraints": {},
+  "checksum": "ca806b8176b3300effcd6a3c3ee73ab810e0342575cc070c02f37b41dfec438b"
+}
