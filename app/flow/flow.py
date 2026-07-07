@@ -52,4 +52,4 @@ def process_repo(repo: RepoRecord):
 @flow(log_prints=True)
 def vigil_sync():
     repos = repo_indexing()
-    process_repo.map(repos)
+    process_repo.map(repos).result()
