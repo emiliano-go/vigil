@@ -1,0 +1,22 @@
+{
+  "migration_id": "clickhouse__0002_add_commit_aggregates",
+  "operations": [
+    {
+      "type": "add_column",
+      "table": "commits",
+      "severity": "INFO",
+      "column": "is_merge"
+    }
+  ],
+  "summary": {
+    "total_operations": 1,
+    "operation_counts": {
+      "add_column": 1
+    },
+    "create_tables": 0,
+    "drop_tables": 0,
+    "drop_columns": 0
+  },
+  "required_flags": [],
+  "checksum": "a1c5aa5199170d3d07ad92887f35ab14c972c50a6eaffee6e6dadc4934ae452d"
+}

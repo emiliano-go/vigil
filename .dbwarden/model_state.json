@@ -1,13 +1,13 @@
 {
   "format_version": 2,
-  "exported_at": "2026-06-26T03:23:06Z",
+  "exported_at": "2026-07-07T14:51:39Z",
   "dbwarden_version": "0.12.4",
   "tables": {
-    "repos": {
-      "name": "repos",
+    "commits": {
+      "name": "commits",
       "columns": {
-        "name": {
-          "name": "name",
+        "repo": {
+          "name": "repo",
           "type": "VARCHAR",
           "nullable": false,
           "primary_key": true,
@@ -22,8 +22,8 @@
           },
           "my_column": {}
         },
-        "owner": {
-          "name": "owner",
+        "sha": {
+          "name": "sha",
           "type": "VARCHAR",
           "nullable": false,
           "primary_key": false,
@@ -38,13 +38,77 @@
           },
           "my_column": {}
         },
-        "is_org": {
-          "name": "is_org",
-          "type": "BOOLEAN",
+        "author_login": {
+          "name": "author_login",
+          "type": "VARCHAR",
           "nullable": false,
           "primary_key": false,
           "unique": null,
           "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "author_name": {
+          "name": "author_name",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "author_email": {
+          "name": "author_email",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "message": {
+          "name": "message",
+          "type": "VARCHAR",
+          "nullable": true,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "is_merge": {
+          "name": "is_merge",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": "FALSE",
           "foreign_key": null,
           "comment": null,
           "autoincrement": "auto",
@@ -54,9 +118,9 @@
           },
           "my_column": {}
         },
-        "default_branch": {
-          "name": "default_branch",
-          "type": "VARCHAR",
+        "committed_at": {
+          "name": "committed_at",
+          "type": "DATETIME",
           "nullable": false,
           "primary_key": false,
           "unique": null,
@@ -66,7 +130,7 @@
           "autoincrement": "auto",
           "pg_column": {},
           "ch_column": {
-            "ch_type": "String"
+            "ch_type": "DateTime64(3)"
           },
           "my_column": {}
         }
@@ -75,21 +139,22 @@
       "foreign_keys": [],
       "checks": [],
       "uniques": [],
-      "comment": "Repo store",
+      "comment": "Commit event store",
       "object_type": "table",
       "backend": "clickhouse",
       "backend_table_spec": {
         "backend": "clickhouse",
         "ch_engine_raw": {
-          "name": "ReplacingMergeTree"
+          "name": "MergeTree"
         },
         "ch_engine": [
-          "ReplacingMergeTree"
+          "MergeTree"
         ],
         "ch_order_by": [
-          "name"
+          "repo",
+          "committed_at"
         ],
-        "ch_primary_key": "name",
+        "ch_primary_key": "repo",
         "ch_object_type": "table",
         "ch_projections": []
       }
@@ -201,8 +266,99 @@
         "ch_projections": []
       }
     },
-    "commits": {
-      "name": "commits",
+    "repos": {
+      "name": "repos",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "owner": {
+          "name": "owner",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "is_org": {
+          "name": "is_org",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Bool"
+          },
+          "my_column": {}
+        },
+        "default_branch": {
+          "name": "default_branch",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Repo store",
+      "object_type": "table",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": {
+          "name": "ReplacingMergeTree"
+        },
+        "ch_engine": [
+          "ReplacingMergeTree"
+        ],
+        "ch_order_by": [
+          "name"
+        ],
+        "ch_primary_key": "name",
+        "ch_object_type": "table",
+        "ch_projections": []
+      }
+    },
+    "commits_per_day": {
+      "name": "commits_per_day",
       "columns": {
         "repo": {
           "name": "repo",
@@ -220,11 +376,299 @@
           },
           "my_column": {}
         },
-        "sha": {
-          "name": "sha",
-          "type": "VARCHAR",
+        "day": {
+          "name": "day",
+          "type": "DATE",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Date"
+          },
+          "my_column": {}
+        },
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
           "nullable": false,
           "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int64"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Daily commit counts per repo",
+      "object_type": "table",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total"
+        ],
+        "ch_order_by": [
+          "repo",
+          "day"
+        ],
+        "ch_primary_key": [
+          "repo",
+          "day"
+        ],
+        "ch_object_type": "table",
+        "ch_projections": []
+      }
+    },
+    "commits_per_day_mv": {
+      "name": "commits_per_day_mv",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "day": {
+          "name": "day",
+          "type": "DATE",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Date"
+          },
+          "my_column": {}
+        },
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int64"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Materialized view for commits per day",
+      "object_type": "materialized_view",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": "MergeTree",
+        "ch_engine": "MergeTree",
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toDate(committed_at) AS day, count() AS total FROM commits GROUP BY repo, day",
+        "ch_to_table": "commits_per_day",
+        "ch_projections": []
+      }
+    },
+    "commits_per_month": {
+      "name": "commits_per_month",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "month": {
+          "name": "month",
+          "type": "DATE",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Date"
+          },
+          "my_column": {}
+        },
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int64"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Monthly commit counts per repo",
+      "object_type": "table",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total"
+        ],
+        "ch_order_by": [
+          "repo",
+          "month"
+        ],
+        "ch_primary_key": [
+          "repo",
+          "month"
+        ],
+        "ch_object_type": "table",
+        "ch_projections": []
+      }
+    },
+    "commits_per_month_mv": {
+      "name": "commits_per_month_mv",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "month": {
+          "name": "month",
+          "type": "DATE",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Date"
+          },
+          "my_column": {}
+        },
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int64"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Materialized view for commits per month",
+      "object_type": "materialized_view",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": "MergeTree",
+        "ch_engine": "MergeTree",
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toStartOfMonth(committed_at) AS month, count() AS total FROM commits GROUP BY repo, month",
+        "ch_to_table": "commits_per_month",
+        "ch_projections": []
+      }
+    },
+    "author_commit_counts": {
+      "name": "author_commit_counts",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
           "unique": null,
           "default": null,
           "foreign_key": null,
@@ -240,7 +684,7 @@
           "name": "author_login",
           "type": "VARCHAR",
           "nullable": false,
-          "primary_key": false,
+          "primary_key": true,
           "unique": null,
           "default": null,
           "foreign_key": null,
@@ -252,9 +696,9 @@
           },
           "my_column": {}
         },
-        "author_name": {
-          "name": "author_name",
-          "type": "VARCHAR",
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
           "nullable": false,
           "primary_key": false,
           "unique": null,
@@ -264,55 +708,7 @@
           "autoincrement": "auto",
           "pg_column": {},
           "ch_column": {
-            "ch_type": "String"
-          },
-          "my_column": {}
-        },
-        "author_email": {
-          "name": "author_email",
-          "type": "VARCHAR",
-          "nullable": false,
-          "primary_key": false,
-          "unique": null,
-          "default": null,
-          "foreign_key": null,
-          "comment": null,
-          "autoincrement": "auto",
-          "pg_column": {},
-          "ch_column": {
-            "ch_type": "String"
-          },
-          "my_column": {}
-        },
-        "message": {
-          "name": "message",
-          "type": "VARCHAR",
-          "nullable": true,
-          "primary_key": false,
-          "unique": null,
-          "default": null,
-          "foreign_key": null,
-          "comment": null,
-          "autoincrement": "auto",
-          "pg_column": {},
-          "ch_column": {
-            "ch_type": "String"
-          },
-          "my_column": {}
-        },
-        "committed_at": {
-          "name": "committed_at",
-          "type": "DATETIME",
-          "nullable": false,
-          "primary_key": false,
-          "unique": null,
-          "default": null,
-          "foreign_key": null,
-          "comment": null,
-          "autoincrement": "auto",
-          "pg_column": {},
-          "ch_column": {
-            "ch_type": "DateTime64(3)"
+            "ch_type": "Int64"
           },
           "my_column": {}
         }
@@ -321,23 +717,251 @@
       "foreign_keys": [],
       "checks": [],
       "uniques": [],
-      "comment": "Commit event store",
+      "comment": "Commit counts per repo and author",
       "object_type": "table",
       "backend": "clickhouse",
       "backend_table_spec": {
         "backend": "clickhouse",
         "ch_engine_raw": {
-          "name": "MergeTree"
+          "name": "SummingMergeTree",
+          "args": [
+            "total"
+          ]
         },
         "ch_engine": [
-          "MergeTree"
+          "SummingMergeTree",
+          "total"
         ],
         "ch_order_by": [
           "repo",
-          "committed_at"
+          "author_login"
         ],
-        "ch_primary_key": "repo",
+        "ch_primary_key": [
+          "repo",
+          "author_login"
+        ],
         "ch_object_type": "table",
+        "ch_projections": []
+      }
+    },
+    "author_commit_counts_mv": {
+      "name": "author_commit_counts_mv",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "author_login": {
+          "name": "author_login",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int64"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Materialized view for author commit counts",
+      "object_type": "materialized_view",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": "MergeTree",
+        "ch_engine": "MergeTree",
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, author_login, count() AS total FROM commits GROUP BY repo, author_login",
+        "ch_to_table": "author_commit_counts",
+        "ch_projections": []
+      }
+    },
+    "hourly_activity": {
+      "name": "hourly_activity",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "hour": {
+          "name": "hour",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int32"
+          },
+          "my_column": {}
+        },
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
+          "nullable": false,
+          "primary_key": false,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int64"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Commit counts by hour of day per repo",
+      "object_type": "table",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": {
+          "name": "SummingMergeTree",
+          "args": [
+            "total"
+          ]
+        },
+        "ch_engine": [
+          "SummingMergeTree",
+          "total"
+        ],
+        "ch_order_by": [
+          "repo",
+          "hour"
+        ],
+        "ch_primary_key": [
+          "repo",
+          "hour"
+        ],
+        "ch_object_type": "table",
+        "ch_projections": []
+      }
+    },
+    "hourly_activity_mv": {
+      "name": "hourly_activity_mv",
+      "columns": {
+        "repo": {
+          "name": "repo",
+          "type": "VARCHAR",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "String"
+          },
+          "my_column": {}
+        },
+        "hour": {
+          "name": "hour",
+          "type": "INTEGER",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int32"
+          },
+          "my_column": {}
+        },
+        "total": {
+          "name": "total",
+          "type": "BIGINT",
+          "nullable": false,
+          "primary_key": true,
+          "unique": null,
+          "default": null,
+          "foreign_key": null,
+          "comment": null,
+          "autoincrement": "auto",
+          "pg_column": {},
+          "ch_column": {
+            "ch_type": "Int64"
+          },
+          "my_column": {}
+        }
+      },
+      "indexes": [],
+      "foreign_keys": [],
+      "checks": [],
+      "uniques": [],
+      "comment": "Materialized view for hourly activity",
+      "object_type": "materialized_view",
+      "backend": "clickhouse",
+      "backend_table_spec": {
+        "backend": "clickhouse",
+        "ch_engine_raw": "MergeTree",
+        "ch_engine": "MergeTree",
+        "ch_object_type": "materialized_view",
+        "ch_select_statement": "SELECT repo, toHour(committed_at) AS hour, count() AS total FROM commits GROUP BY repo, hour",
+        "ch_to_table": "hourly_activity",
         "ch_projections": []
       }
     }

@@ -1,0 +1,56 @@
+{
+  "migration_id": "clickhouse__0003_add_agg_tables",
+  "operations": [
+    {
+      "type": "create_table",
+      "table": "author_commit_counts",
+      "severity": "INFO"
+    },
+    {
+      "type": "create_table",
+      "table": "author_commit_counts_mv",
+      "severity": "INFO"
+    },
+    {
+      "type": "create_table",
+      "table": "commits_per_day",
+      "severity": "INFO"
+    },
+    {
+      "type": "create_table",
+      "table": "commits_per_day_mv",
+      "severity": "INFO"
+    },
+    {
+      "type": "create_table",
+      "table": "commits_per_month",
+      "severity": "INFO"
+    },
+    {
+      "type": "create_table",
+      "table": "commits_per_month_mv",
+      "severity": "INFO"
+    },
+    {
+      "type": "create_table",
+      "table": "hourly_activity",
+      "severity": "INFO"
+    },
+    {
+      "type": "create_table",
+      "table": "hourly_activity_mv",
+      "severity": "INFO"
+    }
+  ],
+  "summary": {
+    "total_operations": 8,
+    "operation_counts": {
+      "create_table": 8
+    },
+    "create_tables": 8,
+    "drop_tables": 0,
+    "drop_columns": 0
+  },
+  "required_flags": [],
+  "checksum": "fb54149c257efa49beef572bb47c18b5efbdb3c69df63050a07b8026ea92f68d"
+}

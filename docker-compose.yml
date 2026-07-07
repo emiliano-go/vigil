@@ -2,6 +2,8 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:24.8
     container_name: vigil-clickhouse
+    restart: unless-stopped
+    platform: linux/amd64
     env_file:
       - .env
     environment:
@@ -9,10 +11,23 @@ services:
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       CLICKHOUSE_DB: ${CLICKHOUSE_DB}
     ports:
-      - "8123:8123"
-      - "9000:9000"
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
 
+  prefect-server:
+    image: prefecthq/prefect:3-latest
+    container_name: vigil-prefect
+    restart: unless-stopped
+    command: ["prefect", "server", "start", "--host", "0.0.0.0"]
+    environment:
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:4200:4200"
+    volumes:
+      - prefect_data:/root/.prefect
+
 volumes:
   clickhouse_data:
+  prefect_data:

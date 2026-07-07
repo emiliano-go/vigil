@@ -13,9 +13,11 @@ class Settings:
     clickhouse_password: str = ""
     clickhouse_db: str = "default"
     clickhouse_host: str = "localhost"
-    clickhouse_http_port: int = 8123
+    clickhouse_port: int = 8123
     clickhouse_native_port: int = 9000
-    github_user_token : str = ""
+    github_user_token: str = ""
+    api_key: str = ""
+    rate_limit: str = "60/minute"
 
     def __init__(self) -> None:
         import os
@@ -24,15 +26,17 @@ class Settings:
         object.__setattr__(self, "clickhouse_password", os.getenv("CLICKHOUSE_PASSWORD", ""))
         object.__setattr__(self, "clickhouse_db", os.getenv("CLICKHOUSE_DB", "default"))
         object.__setattr__(self, "clickhouse_host", os.getenv("CLICKHOUSE_HOST", "localhost"))
-        object.__setattr__(self, "clickhouse_http_port", int(os.getenv("CLICKHOUSE_HTTP_PORT", "8123")))
+        object.__setattr__(self, "clickhouse_port", int(os.getenv("CLICKHOUSE_PORT", "8123")))
         object.__setattr__(self, "clickhouse_native_port", int(os.getenv("CLICKHOUSE_NATIVE_PORT", "9000")))
         object.__setattr__(self, "github_user_token", os.getenv("GITHUB_TOKEN", ""))
+        object.__setattr__(self, "api_key", os.getenv("API_KEY", ""))
+        object.__setattr__(self, "rate_limit", os.getenv("RATE_LIMIT", "60/minute"))
 
     @property
     def clickhouse_http_url(self) -> str:
         return (
             f"http://{self.clickhouse_user}:{self.clickhouse_password}"
-            f"@{self.clickhouse_host}:{self.clickhouse_http_port}/{self.clickhouse_db}"
+            f"@{self.clickhouse_host}:{self.clickhouse_port}/{self.clickhouse_db}"
         )
 
     @property
@@ -46,7 +50,7 @@ class Settings:
     def clickhouse_async_url(self) -> str:
         return (
             f"http://{self.clickhouse_user}:{self.clickhouse_password}"
-            f"@{self.clickhouse_host}:{self.clickhouse_http_port}/{self.clickhouse_db}"
+            f"@{self.clickhouse_host}:{self.clickhouse_port}/{self.clickhouse_db}"
         )
 
 

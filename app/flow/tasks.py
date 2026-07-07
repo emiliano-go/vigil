@@ -1,8 +1,10 @@
-from prefect import task, get_run_logger
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
+import logging
+
+from prefect import get_run_logger, task
+from prefect.exceptions import MissingContextError
 from github import RateLimitExceededException
-from prefect.tasks import exponential_backoff
 
 from app.services.client import get_clickhouse_client, get_repo_handle, github_session
 from app.services.commits import extract_commit_data
@@ -14,9 +16,20 @@ class RepoRecord:
     owner: str
     default_branch: str
 
+    @property
+    def full_name(self) -> str:
+        return f"{self.owner}/{self.name}"
+
+
+def _get_logger():
+    try:
+        return get_run_logger()
+    except MissingContextError:
+        return logging.getLogger("vigil")
+
 @task
 def load_active_repos():
-    log = get_run_logger()
+    log = _get_logger()
 
     client = get_clickhouse_client()
 
@@ -34,8 +47,7 @@ def load_active_repos():
     return repos
 
 @task
-def get_sync_state(repo_name : str):
-
+def get_sync_state(repo_name: str):
     client = get_clickhouse_client()
 
     try:
@@ -49,19 +61,18 @@ def get_sync_state(repo_name : str):
         else:
             last_synced_at, last_synced_sha = None, None
 
-        return (last_synced_at,last_synced_sha)
+        return (last_synced_at, last_synced_sha)
 
     finally:
         client.close()
 
 @task(retries=3, retry_delay_seconds=[10, 30, 90])
-def fetch_commits(repo_name : str, since_datetime : datetime):
-
-    log = get_run_logger()
+def fetch_commits(repo_full_name: str, since_datetime: datetime | None):
+    log = _get_logger()
 
     with github_session() as gh:
         try:
-            repo_handle = get_repo_handle(gh, repo_name)
+            repo_handle = get_repo_handle(gh, repo_full_name)
 
             if since_datetime is None:
                 commits = repo_handle.get_commits()
@@ -73,12 +84,12 @@ def fetch_commits(repo_name : str, since_datetime : datetime):
             for commit in commits:
                 results.append(extract_commit_data(commit))
 
-            log.info(f"{repo_name} -> {len(results)} commits fetched (since={since_datetime})")
+            log.info(f"{repo_full_name} -> {len(results)} commits fetched (since={since_datetime})")
             return results
         
         except RateLimitExceededException:
             reset_time = gh.get_rate_limit().core.reset
-            log.warning(f"Rate limit hit for {repo_name}, resets at {reset_time}: letting Prefect retry")
+            log.warning(f"Rate limit hit for {repo_full_name}, resets at {reset_time}: letting Prefect retry")
             raise
 
 
@@ -92,4 +103,61 @@ def transform_commit(raw_commit, repo_name):
         author_login=raw_commit["author_login"],
         committed_at=raw_commit["committed_at"],
         message=raw_commit["message"],
+        is_merge=raw_commit["is_merge"],
     )
+
+@task(retries=2, retry_delay_seconds=5)
+def insert_commits(commit_records):
+    log = _get_logger()
+
+    if not commit_records:
+        return 0
+
+    client = get_clickhouse_client()
+
+    columns = [
+        "repo",
+        "sha",
+        "author_login",
+        "author_name",
+        "author_email",
+        "message",
+        "is_merge",
+        "committed_at",
+    ]
+
+    def _value(record, column):
+        if isinstance(record, dict):
+            return record[column]
+        return getattr(record, column)
+
+    try:
+        rows = [tuple(_value(record, column) for column in columns) for record in commit_records]
+        client.insert("commits", data=rows, column_names=columns)
+        log.info(f"{len(commit_records)} commits have been saved to clickhouse")
+
+    finally:
+        client.close()
+    
+    return len(commit_records)
+
+
+@task(retries=2, retry_delay_seconds=5)
+def update_sync_state(repo_full_name, last_synced_at, last_synced_sha, status):
+    log = _get_logger()
+
+    client = get_clickhouse_client()
+
+    effective_last_synced_at = last_synced_at or datetime.now(timezone.utc)
+    effective_last_synced_sha = last_synced_sha or ""
+
+    try:
+        client.insert(
+            "sync_state",
+            data=[[repo_full_name, effective_last_synced_at, effective_last_synced_sha, status, datetime.now(timezone.utc)]],
+            column_names=["repo", "last_synced_at", "last_synced_sha", "last_run_status", "last_run_at"],
+        )
+        log.info(f"sync_state updated for {repo_full_name}: {status}")
+
+    finally:
+        client.close()

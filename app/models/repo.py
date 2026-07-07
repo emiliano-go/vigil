@@ -34,7 +34,6 @@ class RepoSeed(Seed):
         Repo(name="detrack", owner="emiliano-go", is_org=False, default_branch="master"),
         Repo(name="seoslug", owner="emiliano-go", is_org=False, default_branch="master"),
         Repo(name="acrresolv", owner="emiliano-go", is_org=False, default_branch="master"),
-        Repo(name="emiliano-go", owner="emiliano-go", is_org=False, default_branch="main"),
         Repo(name="equinox", owner="emiliano-go", is_org=False, default_branch="main"),
         Repo(name="ArgosUY", owner="LibreCourseUY", is_org=True, default_branch="main"),
         Repo(name="UruAPI", owner="LibreCourseUY", is_org=True, default_branch="main"),
