@@ -29,9 +29,8 @@ services:
       - prefect_data:/root/.prefect
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/emiliano-go/vigil:latest
+    pull_policy: always
     container_name: vigil-app
     restart: unless-stopped
     env_file:
