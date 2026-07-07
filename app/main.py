@@ -46,7 +46,7 @@ limiter = Limiter(
     headers_enabled=True,
 )
 
-app = FastAPI(title="vigil", lifespan=lifespan)
+app = FastAPI(title="vigil", root_path=settings.root_path, lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(api_router)

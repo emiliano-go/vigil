@@ -10,9 +10,8 @@ services:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       CLICKHOUSE_DB: ${CLICKHOUSE_DB}
-    ports:
-      - "127.0.0.1:8123:8123"
-      - "127.0.0.1:9000:9000"
+    networks:
+      - vigil_internal
     volumes:
       - clickhouse_data:/var/lib/clickhouse
 
@@ -23,8 +22,8 @@ services:
     command: ["prefect", "server", "start", "--host", "0.0.0.0"]
     environment:
       PREFECT_SERVER_API_HOST: 0.0.0.0
-    ports:
-      - "127.0.0.1:4200:4200"
+    networks:
+      - vigil_internal
     volumes:
       - prefect_data:/root/.prefect
 
@@ -44,8 +43,13 @@ services:
     depends_on:
       - clickhouse
       - prefect-server
-    ports:
-      - "127.0.0.1:8000:8000"
+    networks:
+      - vigil_internal
+
+networks:
+  vigil_internal:
+    name: vigil_internal
+    driver: bridge
 
 volumes:
   clickhouse_data:
