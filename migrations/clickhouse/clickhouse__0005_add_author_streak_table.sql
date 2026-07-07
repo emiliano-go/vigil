@@ -44,11 +44,11 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS author_commit_days_mv TO author_commit_da
 )
 AS SELECT author_login, toDate(committed_at) AS day, count() AS total FROM commits GROUP BY author_login, day COMMENT 'Materialized view for daily author commit counts';
 
-ALTER TABLE commits ADD COLUMN is_merge Bool DEFAULT false
+ALTER TABLE commits ADD COLUMN IF NOT EXISTS is_merge Bool DEFAULT false
 
-ALTER TABLE repos ADD COLUMN full_name String
+ALTER TABLE repos ADD COLUMN IF NOT EXISTS full_name String
 
-ALTER TABLE repos ADD COLUMN private Bool
+ALTER TABLE repos ADD COLUMN IF NOT EXISTS private Bool
 
 -- rollback
 
