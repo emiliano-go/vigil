@@ -37,18 +37,23 @@ def main() -> None:
 
     subprocess.run(["dbwarden", "migrate"], check=True)
 
+    root_path = os.environ.get("ROOT_PATH", "").strip()
+    uvicorn_args = [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        os.environ.get("PORT", "8000"),
+        "--workers",
+        "1",
+    ]
+    if root_path:
+        uvicorn_args.extend(["--root-path", root_path])
+
     os.execvp(
         "uvicorn",
-        [
-            "uvicorn",
-            "app.main:app",
-            "--host",
-            "0.0.0.0",
-            "--port",
-            os.environ.get("PORT", "8000"),
-            "--workers",
-            "1",
-        ],
+        uvicorn_args,
     )
 
 
