@@ -12,7 +12,7 @@ from app.services.github_contributions import (
     get_total_contributions,
     get_viewer_login,
 )
-from app.services.client import get_clickhouse_client
+from app.services.client import get_clickhouse_client, github_session
 
 router = APIRouter(prefix="/api", tags=["vigil"], dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)])
 
@@ -137,6 +137,15 @@ class FlowRunOut(BaseModel):
     detail: str
 
 
+class AddRepoRequest(BaseModel):
+    full_name: str
+
+
+class RepoAddOut(BaseModel):
+    repo: RepoOut
+    sync: FlowRunOut
+
+
 def _stats_where(repo: str | None = None, clause: str = "repo = %(repo)s") -> tuple[str, dict[str, str]]:
     params: dict[str, str] = {}
     where = ""
@@ -214,8 +223,16 @@ def trigger_flow(background_tasks: BackgroundTasks):
 
 
 @router.get("/repos", response_model=list[RepoOut])
-def list_repos():
-    rows = _query_dicts("SELECT full_name, name, owner, is_org, private, default_branch FROM repos ORDER BY full_name")
+def list_repos(login: str | None = None):
+    if login:
+        rows = _query_dicts(
+            "SELECT full_name, name, owner, is_org, private, default_branch FROM repos WHERE owner = %(login)s ORDER BY full_name",
+            {"login": login},
+        )
+    else:
+        rows = _query_dicts(
+            "SELECT full_name, name, owner, is_org, private, default_branch FROM repos ORDER BY full_name"
+        )
     return [RepoOut.model_validate(row) for row in rows]
 
 
@@ -229,6 +246,81 @@ def read_sync_state(repo_full_name: str):
     if not rows:
         raise HTTPException(status_code=404, detail=f"No sync state found for {repo_full_name}")
     return SyncStateOut.model_validate(rows[0])
+
+
+@router.post("/repos", response_model=RepoAddOut, status_code=201)
+def add_repo(body: AddRepoRequest, background_tasks: BackgroundTasks):
+    with github_session() as gh:
+        try:
+            gh_repo = gh.get_repo(body.full_name)
+        except Exception as exc:
+            raise HTTPException(status_code=404, detail=f"Repo {body.full_name} not found on GitHub") from exc
+
+        repo_record = {
+            "full_name": gh_repo.full_name,
+            "name": gh_repo.name,
+            "owner": gh_repo.owner.login,
+            "is_org": getattr(gh_repo.owner, "type", "") == "Organization",
+            "private": bool(gh_repo.private),
+            "default_branch": gh_repo.default_branch or "main",
+        }
+
+    client = get_clickhouse_client()
+    try:
+        client.command(
+            "ALTER TABLE repos DELETE WHERE full_name = %(full_name)s",
+            parameters={"full_name": body.full_name},
+        )
+        client.insert(
+            "repos",
+            data=[[repo_record[c] for c in ["full_name", "name", "owner", "is_org", "private", "default_branch"]]],
+            column_names=["full_name", "name", "owner", "is_org", "private", "default_branch"],
+        )
+        client.command(
+            "ALTER TABLE sync_state DELETE WHERE repo = %(repo)s",
+            parameters={"repo": body.full_name},
+        )
+        client.command(
+            "ALTER TABLE excluded_repos DELETE WHERE full_name = %(full_name)s",
+            parameters={"full_name": body.full_name},
+        )
+    finally:
+        client.close()
+
+    def _sync() -> None:
+        vigil_sync()
+
+    background_tasks.add_task(_sync)
+
+    return RepoAddOut(
+        repo=RepoOut.model_validate(repo_record),
+        sync=FlowRunOut(status="queued", detail="Repo added, sync queued"),
+    )
+
+
+@router.delete("/repos/{repo_full_name:path}", status_code=204)
+def remove_repo(repo_full_name: str):
+    client = get_clickhouse_client()
+    try:
+        client.command(
+            "ALTER TABLE commits DELETE WHERE repo = %(repo)s",
+            parameters={"repo": repo_full_name},
+        )
+        client.command(
+            "ALTER TABLE sync_state DELETE WHERE repo = %(repo)s",
+            parameters={"repo": repo_full_name},
+        )
+        client.command(
+            "ALTER TABLE excluded_repos DELETE WHERE full_name = %(full_name)s",
+            parameters={"full_name": repo_full_name},
+        )
+        client.insert(
+            "excluded_repos",
+            data=[[repo_full_name]],
+            column_names=["full_name"],
+        )
+    finally:
+        client.close()
 
 
 @router.get("/commits", response_model=list[CommitOut])
@@ -279,11 +371,6 @@ def daily_stats(repo: str | None = None):
     )
 
 
-@router.get("/stats/daily/{repo_full_name:path}", response_model=DailyStatsOut)
-def daily_stats_for_repo(repo_full_name: str):
-    return daily_stats(repo_full_name)
-
-
 @router.get("/stats/daily/authors", response_model=DailyAuthorStatsOut)
 def daily_author_stats(days: int = Query(default=7, ge=1, le=365), author_login: str | None = None):
     params: dict[str, int | str] = {"days": days}
@@ -324,11 +411,6 @@ def monthly_stats(repo: str | None = None):
     )
 
 
-@router.get("/stats/monthly/{repo_full_name:path}", response_model=MonthlyStatsOut)
-def monthly_stats_for_repo(repo_full_name: str):
-    return monthly_stats(repo_full_name)
-
-
 @router.get("/stats/authors", response_model=list[AuthorCommitCountOut])
 def author_stats(repo: str | None = None):
     where, params = _stats_where(repo)
@@ -337,11 +419,6 @@ def author_stats(repo: str | None = None):
         params or None,
     )
     return [AuthorCommitCountOut.model_validate(row) for row in rows]
-
-
-@router.get("/stats/authors/{repo_full_name:path}", response_model=list[AuthorCommitCountOut])
-def author_stats_for_repo(repo_full_name: str):
-    return author_stats(repo_full_name)
 
 
 @router.get("/stats/hourly", response_model=list[HourlyActivityOut])
@@ -406,11 +483,6 @@ def hourly_stats_for_author_range(
         params,
     )
     return _hourly_range_from_rows(rows, since_utc, until_utc)
-
-
-@router.get("/stats/hourly/{repo_full_name:path}", response_model=list[HourlyActivityOut])
-def hourly_stats_for_repo(repo_full_name: str):
-    return hourly_stats(repo_full_name)
 
 
 @router.get("/stats/weekly", response_model=DailyStatsOut)

@@ -14,6 +14,7 @@ from app.flow.tasks import (
     transform_commit,
     update_sync_state,
 )
+from app.services.client import get_clickhouse_client
 
 
 @task
@@ -54,7 +55,22 @@ def process_repo(repo: RepoRecord):
         raise
 
 
+@task
+def get_excluded_repos() -> set[str]:
+    client = get_clickhouse_client()
+    try:
+        result = client.query("SELECT full_name FROM excluded_repos FINAL")
+        return {row[0] for row in result.result_rows}
+    finally:
+        client.close()
+
+
 @flow(log_prints=True)
 def vigil_sync():
     repos = repo_indexing()
-    process_repo.map(repos).result()
+    excluded = get_excluded_repos()
+    filtered = [r for r in repos if r.full_name not in excluded]
+    if excluded:
+        log = logging.getLogger("vigil")
+        log.info(f"Excluded {len(excluded)} repos from sync, processing {len(filtered)} repos")
+    process_repo.map(filtered).result()

@@ -160,8 +160,10 @@ Source of truth is GitHub GraphQL contribution calendar.
 ### Repos
 
 ```
-GET /api/repos
+GET /api/repos?login=
 ```
+
+Optional `login` filter restricts to repos owned by that user/organization.
 
 ```json
 [
@@ -175,6 +177,44 @@ GET /api/repos
   }
 ]
 ```
+
+### Add repo
+
+```
+POST /api/repos
+```
+
+```json
+{ "full_name": "owner/repo" }
+```
+
+Validates the repo exists on GitHub, adds it to tracking, and queues an
+immediate sync.
+
+```json
+{
+  "repo": {
+    "full_name": "owner/repo",
+    "name": "repo",
+    "owner": "owner",
+    "default_branch": "master"
+  },
+  "sync": {
+    "status": "queued",
+    "detail": "Repo added, sync queued"
+  }
+}
+```
+
+### Remove repo
+
+```
+DELETE /api/repos/{full_name}
+```
+
+Removes the repo from tracking: wipes its commits and sync state, and adds it
+to the exclusion list so future sync cycles skip it. Returns 204 on success.
+The repo can be re-added later via `POST /api/repos`.
 
 ### Commits
 
@@ -219,12 +259,6 @@ With `repo`: totals from ClickHouse with `by_repo` breakdown.
 }
 ```
 
-```
-GET /api/stats/daily/{repo_full_name}
-```
-
-Shorthand for `?repo=`.
-
 ### Daily author stats
 
 ```
@@ -242,7 +276,6 @@ GET /api/stats/daily/authors?days=7&author_login=
 
 ```
 GET /api/stats/monthly?repo=
-GET /api/stats/monthly/{repo_full_name}
 GET /api/stats/weekly?repo=
 GET /api/stats/yearly?repo=
 ```
@@ -262,7 +295,6 @@ GET /api/stats/yearly?repo=
 
 ```
 GET /api/stats/hourly?repo=
-GET /api/stats/hourly/{repo_full_name}
 ```
 
 ```json
@@ -285,7 +317,7 @@ Same shape as `/hourly`, filtered by author login.
 GET /api/stats/hourly/authors/range?author_login=...&since=...&until=...&repo=
 ```
 
-`sinc e` and `until` are ISO 8601. `[since, until)` semantics: aligned 24h
+`since` and `until` are ISO 8601. `[since, until)` semantics: aligned 24h
 windows return exactly 24 buckets. Partial-end buckets are included.
 
 ```json
@@ -326,7 +358,7 @@ GET /api/stats/merge-ratio?repo=
 ### Activity range
 
 ```
-GET /api/stats/activity-range?sinc e=...&until=...&repo=
+GET /api/stats/activity-range?since=...&until=...&repo=
 ```
 
 Returns deduped commits (by `repo` + `sha`) in the time window.
@@ -346,7 +378,6 @@ Returns deduped commits (by `repo` + `sha`) in the time window.
 
 ```
 GET /api/stats/authors?repo=
-GET /api/stats/authors/{repo_full_name}
 ```
 
 ```json

@@ -12,4 +12,5 @@ from app.models.agg import (
 )
 from app.models.commit import Commit
 from app.models.repo import Repo
+from app.models.excluded_repo import ExcludedRepo
 from app.models.sync import SyncState
