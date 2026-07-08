@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -8,7 +8,6 @@ from app.core.security import enforce_rate_limit, require_api_key
 from app.flow.flow import vigil_sync
 from app.services.github_contributions import (
     get_contribution_daily_totals,
-    get_contribution_streak,
     get_total_contributions,
     get_viewer_login,
 )
@@ -350,28 +349,32 @@ def hourly_stats_for_author_range(
 
     where = f"WHERE {' AND '.join(clauses)}"
     rows = _query_dicts(
-        f"""
-        WITH
-            toStartOfHour(%(since)s) AS start_hour,
-            toStartOfHour(%(until)s) AS end_hour
-        SELECT
-            periods.period AS period,
-            ifNull(agg.total, 0) AS total
-        FROM (
-            SELECT addHours(start_hour, number) AS period
-            FROM numbers(dateDiff('hour', start_hour, end_hour) + 1)
-        ) AS periods
-        LEFT JOIN (
-            SELECT toStartOfHour(committed_at) AS period, count() AS total
-            FROM commits
-            {where}
-            GROUP BY period
-        ) AS agg USING (period)
-        ORDER BY period
-        """,
+        f"SELECT committed_at FROM commits {where} ORDER BY committed_at",
         params,
     )
-    return [HourlyTotalOut.model_validate(row) for row in rows]
+
+    start_hour = since.replace(minute=0, second=0, microsecond=0)
+    end_hour = until.replace(minute=0, second=0, microsecond=0)
+    if start_hour.tzinfo is None:
+        start_hour = start_hour.replace(tzinfo=since.tzinfo)
+    if end_hour.tzinfo is None:
+        end_hour = end_hour.replace(tzinfo=until.tzinfo)
+
+    totals: dict[datetime, int] = {}
+    for row in rows:
+        committed_at = row["committed_at"]
+        if committed_at.tzinfo is None:
+            committed_at = committed_at.replace(tzinfo=since.tzinfo)
+        hour = committed_at.replace(minute=0, second=0, microsecond=0)
+        totals[hour] = totals.get(hour, 0) + 1
+
+    result: list[HourlyTotalOut] = []
+    current = start_hour
+    while current <= end_hour:
+        result.append(HourlyTotalOut(period=current, total=totals.get(current, 0)))
+        current += timedelta(hours=1)
+
+    return result
 
 
 @router.get("/stats/hourly/{repo_full_name:path}", response_model=list[HourlyActivityOut])
@@ -505,9 +508,53 @@ def activity_range(
 
 @router.get("/stats/streak/{author_login}", response_model=AuthorStreakOut)
 def author_streak(author_login: str):
-    try:
-        streak = get_contribution_streak(settings.canonical_author_login(author_login))
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    author_filter, author_params = _author_login_filter(author_login)
+    params: dict[str, str] = {"timezone": settings.contribution_timezone_name, **author_params}
 
-    return AuthorStreakOut.model_validate(streak.__dict__)
+    rows = _query_dicts(
+        f"""
+        SELECT toDate(committed_at, %(timezone)s) AS day
+        FROM commits
+        {author_filter}
+        GROUP BY day
+        ORDER BY day
+        """,
+        params,
+    )
+
+    active_days = [row["day"] for row in rows]
+    if not active_days:
+        return AuthorStreakOut(
+            author_login=author_login,
+            current_streak=0,
+            longest_streak=0,
+            last_active_day=None,
+            active_days=0,
+        )
+
+    active_set = set(active_days)
+    longest = 0
+    current_run = 0
+    previous_day: date | None = None
+    for day in active_days:
+        if previous_day is not None and day == previous_day + timedelta(days=1):
+            current_run += 1
+        else:
+            current_run = 1
+        previous_day = day
+        longest = max(longest, current_run)
+
+    today = datetime.now(settings.contribution_timezone).date()
+    current = 0
+    probe = today
+    while probe in active_set:
+        current += 1
+        probe -= timedelta(days=1)
+
+    return AuthorStreakOut(
+        author_login=author_login,
+        current_streak=current,
+        longest_streak=longest,
+        last_active_day=active_days[-1],
+        active_days=len(active_days),
+    )

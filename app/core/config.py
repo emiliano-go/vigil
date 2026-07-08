@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
@@ -21,6 +22,7 @@ class Settings:
     root_path: str = ""
     api_key: str = ""
     rate_limit: str = "60/minute"
+    contribution_timezone_name: str = "America/Montevideo"
     author_login_canonical_map: dict[str, str] = None  # type: ignore[assignment]
 
     def __init__(self) -> None:
@@ -37,6 +39,7 @@ class Settings:
         object.__setattr__(self, "root_path", os.getenv("ROOT_PATH", ""))
         object.__setattr__(self, "api_key", os.getenv("API_KEY", ""))
         object.__setattr__(self, "rate_limit", os.getenv("RATE_LIMIT", "60/minute"))
+        object.__setattr__(self, "contribution_timezone_name", os.getenv("CONTRIBUTION_TIMEZONE_NAME", "America/Montevideo"))
         object.__setattr__(self, "author_login_canonical_map", self._load_login_map(os.getenv("AUTHOR_LOGIN_CANONICAL_MAP", "{}")))
 
     @property
@@ -93,6 +96,10 @@ class Settings:
 
         pairs = ", ".join(clauses)
         return f"multiIf({pairs}, {column})"
+
+    @property
+    def contribution_timezone(self) -> ZoneInfo:
+        return ZoneInfo(self.contribution_timezone_name)
 
 
 settings = Settings()
