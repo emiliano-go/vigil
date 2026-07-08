@@ -120,6 +120,43 @@ and you are done.
 
 All endpoints require the `X-API-Key` header and count against the rate limit.
 
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/` | Service root, returns `{"service": "vigil", "status": "ok"}` |
+| | |
+| **Repos** | | |
+| `GET` | `/api/repos?login=` | List tracked repos, optional `login` filter |
+| `POST` | `/api/repos` | Add a repo to tracking and queue sync. Body: `{"full_name": "owner/repo"}` |
+| `DELETE` | `/api/repos/{full_name}` | Remove repo from tracking, wipe commits and sync state |
+| `GET` | `/api/repos/{full_name}/sync-state` | Sync state for a specific repo |
+| | |
+| **Sync** | | |
+| `POST` | `/api/flow/run` | Trigger a sync on demand |
+| | |
+| **Commits** | | |
+| `GET` | `/api/commits?repo=&author_login=&limit=` | List commits, ordered by `committed_at DESC` |
+| | |
+| **Stats** | | |
+| `GET` | `/api/stats/overview` | Total commits (GitHub), repos, authors, busiest day, most active repo |
+| `GET` | `/api/stats/streak/{author_login}` | Current and longest contribution streak (GitHub GraphQL) |
+| `GET` | `/api/stats/daily?repo=` | Daily totals. Without `repo`: GitHub contribution calendar. With `repo`: ClickHouse |
+| `GET` | `/api/stats/daily/authors?days=&author_login=` | Daily totals broken down by author |
+| `GET` | `/api/stats/weekly?repo=` | Weekly aggregated totals |
+| `GET` | `/api/stats/monthly?repo=` | Monthly aggregated totals |
+| `GET` | `/api/stats/yearly?repo=` | Yearly aggregated totals |
+| `GET` | `/api/stats/hourly?repo=` | Hourly activity per repo |
+| `GET` | `/api/stats/hourly/authors?author_login=&repo=` | Hourly activity filtered by author |
+| `GET` | `/api/stats/hourly/authors/range?author_login=&since=&until=&repo=` | Hourly buckets `[since, until)` for an author |
+| `GET` | `/api/stats/authors?repo=` | Commit counts grouped by repo and author |
+| `GET` | `/api/stats/top-repos?limit=&repo=` | Top repos by commit count |
+| `GET` | `/api/stats/merge-ratio?repo=` | Merge vs regular commit ratio |
+| `GET` | `/api/stats/activity-range?since=&until=&repo=` | Deduped commits in a time window |
+| | |
+| **Health** | | |
+| `GET` | `/health/ready` | Readiness check |
+| `GET` | `/health/alive` | Liveness check |
+| `GET` | `/health/version` | Version info |
+
 ### Overview
 
 ```
