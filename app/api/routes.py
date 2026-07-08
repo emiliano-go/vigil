@@ -68,6 +68,11 @@ class HourlyActivityOut(BaseModel):
     total: int
 
 
+class HourlyTotalOut(BaseModel):
+    period: datetime
+    total: int
+
+
 class RepoTotalOut(BaseModel):
     repo: str
     total: int
@@ -319,6 +324,54 @@ def hourly_stats_for_author(author_login: str = Query(..., min_length=1), repo: 
         params or None,
     )
     return [HourlyActivityOut.model_validate(row) for row in rows]
+
+
+@router.get("/stats/hourly/authors/range", response_model=list[HourlyTotalOut])
+def hourly_stats_for_author_range(
+    author_login: str = Query(..., min_length=1),
+    since: datetime = Query(...),
+    until: datetime = Query(...),
+    repo: str | None = None,
+):
+    if since > until:
+        raise HTTPException(status_code=400, detail="since must be before until")
+
+    clauses: list[str] = ["committed_at >= %(since)s", "committed_at <= %(until)s"]
+    params: dict[str, datetime | str] = {"since": since, "until": until}
+
+    if repo:
+        clauses.append("repo = %(repo)s")
+        params["repo"] = repo
+
+    author_filter, author_params = _author_login_filter(author_login)
+    if author_filter:
+        clauses.append(author_filter.removeprefix("WHERE "))
+        params.update(author_params)
+
+    where = f"WHERE {' AND '.join(clauses)}"
+    rows = _query_dicts(
+        f"""
+        WITH
+            toStartOfHour(%(since)s) AS start_hour,
+            toStartOfHour(%(until)s) AS end_hour
+        SELECT
+            periods.period AS period,
+            ifNull(agg.total, 0) AS total
+        FROM (
+            SELECT addHours(start_hour, number) AS period
+            FROM numbers(dateDiff('hour', start_hour, end_hour) + 1)
+        ) AS periods
+        LEFT JOIN (
+            SELECT toStartOfHour(committed_at) AS period, count() AS total
+            FROM commits
+            {where}
+            GROUP BY period
+        ) AS agg USING (period)
+        ORDER BY period
+        """,
+        params,
+    )
+    return [HourlyTotalOut.model_validate(row) for row in rows]
 
 
 @router.get("/stats/hourly/{repo_full_name:path}", response_model=list[HourlyActivityOut])
