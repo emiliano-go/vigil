@@ -9,6 +9,7 @@ from app.flow.flow import vigil_sync
 from app.services.github_contributions import (
     get_contribution_daily_totals,
     get_contribution_streak,
+    get_total_contributions,
     get_viewer_login,
 )
 from app.services.client import get_clickhouse_client
@@ -466,7 +467,10 @@ def merge_ratio(repo: str | None = None):
 
 @router.get("/stats/overview", response_model=OverviewOut)
 def overview_stats():
-    total_commits_row = _query_dicts("SELECT uniqExact(sha) AS total_commits FROM commits")
+    try:
+        total_commits = get_total_contributions(settings.canonical_author_login(get_viewer_login()), start_year=2022)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     totals = _query_dicts(
         f"SELECT uniqExactIf({settings.canonical_author_login_expr()}, {settings.canonical_author_login_expr()} != '') AS total_authors FROM commits"
@@ -479,12 +483,11 @@ def overview_stats():
         "SELECT repo, uniqExact(sha) AS total FROM commits GROUP BY repo ORDER BY total DESC, repo LIMIT 1"
     )
 
-    total_commits = total_commits_row[0] if total_commits_row else {"total_commits": 0}
     total_row = totals[0] if totals else {"total_authors": 0}
     repo_row = repos[0] if repos else {"total_repos": 0}
 
     return OverviewOut(
-        total_commits=int(total_commits["total_commits"]),
+        total_commits=int(total_commits),
         total_repos=int(repo_row["total_repos"]),
         total_authors=int(total_row["total_authors"]),
         busiest_day=PeriodTotalOut.model_validate(busiest_day[0]) if busiest_day else None,

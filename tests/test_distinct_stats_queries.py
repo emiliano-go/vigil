@@ -45,19 +45,21 @@ class DistinctStatsQueryTests(unittest.TestCase):
                 return [{"total_commits": 4219}]
             return []
 
-        with patch.object(routes, "_query_dicts", side_effect=fake_query):
-            routes.daily_stats("emiliano-go/vigil")
-            routes.daily_author_stats(author_login="emiliano-go")
-            routes.monthly_stats("emiliano-go/vigil")
-            routes.author_stats("emiliano-go/vigil")
-            routes.hourly_stats("emiliano-go/vigil")
-            routes.hourly_stats_for_author("emiliano-go", "emiliano-go/vigil")
-            routes.hourly_stats_for_author_range("emiliano-go", datetime(2026, 7, 6), datetime(2026, 7, 7))
-            routes.weekly_stats("emiliano-go/vigil")
-            routes.yearly_stats("emiliano-go/vigil")
-            routes.top_repos()
-            routes.merge_ratio("emiliano-go/vigil")
-            routes.overview_stats()
+        with patch.object(routes, "get_viewer_login", return_value="emiliano-go"):
+            with patch.object(routes, "get_total_contributions", return_value=4800):
+                with patch.object(routes, "_query_dicts", side_effect=fake_query):
+                    routes.daily_stats("emiliano-go/vigil")
+                    routes.daily_author_stats(author_login="emiliano-go")
+                    routes.monthly_stats("emiliano-go/vigil")
+                    routes.author_stats("emiliano-go/vigil")
+                    routes.hourly_stats("emiliano-go/vigil")
+                    routes.hourly_stats_for_author("emiliano-go", "emiliano-go/vigil")
+                    routes.hourly_stats_for_author_range("emiliano-go", datetime(2026, 7, 6), datetime(2026, 7, 7))
+                    routes.weekly_stats("emiliano-go/vigil")
+                    routes.yearly_stats("emiliano-go/vigil")
+                    routes.top_repos()
+                    routes.merge_ratio("emiliano-go/vigil")
+                    routes.overview_stats()
 
         self.assertTrue(any("uniqExact(sha)" in sql for sql in seen_sql))
         self.assertFalse(any("commits_per_day" in sql for sql in seen_sql))
