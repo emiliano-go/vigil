@@ -1,8 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/emiliano-go/vigil/refs/heads/master/assets/icon.png" alt="vigil" width="225"/>
-</p>
-<p align="center">
-  <em>Never miss a commit.</em>
+  <img src="https://raw.githubusercontent.com/emiliano-go/vigil/refs/heads/master/assets/banner.png" alt="vigil"/>
 </p>
 <p align="center">
   <h1 align="center">vigil</h1>
