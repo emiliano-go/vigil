@@ -6,6 +6,7 @@ from prefect.exceptions import MissingContextError
 
 from app.flow.tasks import (
     RepoRecord,
+    get_existing_commit_shas,
     repo_indexing,
     fetch_commits,
     get_sync_state,
@@ -24,7 +25,11 @@ def process_repo(repo: RepoRecord):
     last_synced_at, last_synced_sha = get_sync_state(repo.full_name)
 
     try:
-        raw_commits = fetch_commits(repo.full_name, last_synced_at)
+        existing_shas = get_existing_commit_shas(repo.full_name, last_synced_at)
+        raw_commits = fetch_commits(repo.full_name, last_synced_at, last_synced_sha)
+
+        if existing_shas:
+            raw_commits = [raw_commit for raw_commit in raw_commits if raw_commit["sha"] not in existing_shas]
 
         if not raw_commits:
             update_sync_state(repo.full_name, last_synced_at, last_synced_sha, "success")

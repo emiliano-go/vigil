@@ -88,8 +88,29 @@ def get_sync_state(repo_full_name: str):
     finally:
         client.close()
 
+
+@task
+def get_existing_commit_shas(repo_full_name: str, since_datetime: datetime | None):
+    client = get_clickhouse_client()
+
+    try:
+        if since_datetime is None:
+            result = client.query(
+                "SELECT sha FROM commits WHERE repo = %(repo)s",
+                parameters={"repo": repo_full_name},
+            )
+        else:
+            result = client.query(
+                "SELECT sha FROM commits WHERE repo = %(repo)s AND committed_at >= %(since)s",
+                parameters={"repo": repo_full_name, "since": since_datetime},
+            )
+
+        return {row[0] for row in result.result_rows}
+    finally:
+        client.close()
+
 @task(retries=3, retry_delay_seconds=[10, 30, 90])
-def fetch_commits(repo_full_name: str, since_datetime: datetime | None):
+def fetch_commits(repo_full_name: str, since_datetime: datetime | None, last_synced_sha: str | None = None):
     log = _get_logger()
 
     with github_session() as gh:
@@ -102,17 +123,25 @@ def fetch_commits(repo_full_name: str, since_datetime: datetime | None):
                 commits = repo_handle.get_commits(since=since_datetime)
 
             results = []
+            seen_shas: set[str] = set()
 
             try:
                 for commit in commits:
-                    results.append(extract_commit_data(commit))
+                    data = extract_commit_data(commit)
+                    if last_synced_sha and data["sha"] == last_synced_sha:
+                        log.info(f"{repo_full_name}: reached last synced sha {last_synced_sha}, stopping boundary fetch")
+                        break
+                    if data["sha"] in seen_shas:
+                        continue
+                    seen_shas.add(data["sha"])
+                    results.append(data)
             except GithubException as exc:
                 if getattr(exc, "status", None) == 409:
                     log.info(f"{repo_full_name} is empty, skipping commit fetch")
                     return []
                 raise
 
-            log.info(f"{repo_full_name} -> {len(results)} commits fetched (since={since_datetime})")
+            log.info(f"{repo_full_name} -> {len(results)} unique commits fetched (since={since_datetime})")
             return results
         
         except RateLimitExceededException:
@@ -160,14 +189,25 @@ def insert_commits(commit_records):
         return getattr(record, column)
 
     try:
-        rows = [tuple(_value(record, column) for column in columns) for record in commit_records]
+        rows = []
+        seen_keys: set[tuple[str, str]] = set()
+        for record in commit_records:
+            row = tuple(_value(record, column) for column in columns)
+            key = (row[0], row[1])
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            rows.append(row)
+        if not rows:
+            log.info("No unique commits to save to clickhouse")
+            return 0
         client.insert("commits", data=rows, column_names=columns)
-        log.info(f"{len(commit_records)} commits have been saved to clickhouse")
+        log.info(f"{len(rows)} unique commits have been saved to clickhouse")
 
     finally:
         client.close()
-    
-    return len(commit_records)
+
+    return len(rows)
 
 
 @task(retries=2, retry_delay_seconds=5)

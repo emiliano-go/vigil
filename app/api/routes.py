@@ -156,6 +156,18 @@ def _query_dicts(sql: str, parameters: dict | None = None):
         client.close()
 
 
+def _unique_commits(rows: list[dict]) -> list[dict]:
+    seen: set[tuple[str, str]] = set()
+    unique_rows: list[dict] = []
+    for row in rows:
+        key = (row["repo"], row["sha"])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_rows.append(row)
+    return unique_rows
+
+
 def _to_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
@@ -522,7 +534,7 @@ def activity_range(
         f"SELECT repo, sha, author_login, author_name, author_email, message, is_merge, committed_at FROM commits {where} ORDER BY committed_at DESC",
         params or None,
     )
-    return [CommitOut.model_validate(row) for row in rows]
+    return [CommitOut.model_validate(row) for row in _unique_commits(rows)]
 
 
 @router.get("/stats/streak/{author_login}", response_model=AuthorStreakOut)
