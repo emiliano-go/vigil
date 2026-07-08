@@ -53,14 +53,6 @@ The sync is incremental: each repo tracks its last synced SHA, so every run
 only fetches what's new. Commits that appear on multiple branches are
 deduplicated by SHA at the fetch, insert, and query layers.
 
-```mermaid
-graph LR
-  GitHub -->|REST API| Prefect
-  Prefect -->|inserts rows| ClickHouse
-  ClickHouse -->|queried by| FastAPI
-  FastAPI -->|REST API| You
-```
-
 No data leaves your infrastructure. The GitHub token, ClickHouse password, and
 API key stay in your `.env` file.
 
