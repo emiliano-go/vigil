@@ -31,36 +31,385 @@
 
 ## Quick start
 
-```python
-from app.core.config import settings
-from app.services.client import get_clickhouse_client
+```bash
+git clone https://github.com/emiliano-go/vigil.git
+cd vigil
 
-client = get_clickhouse_client()
-rows = client.query("SELECT uniqExact(sha) AS total FROM commits")
-print(f"{rows[0][0]} commits tracked")
+# Only edit this file: set your GitHub token and API key
+cp .env.example .env
+
+# Start everything
+docker compose up -d
 ```
 
-That is it. vigil syncs every 30 minutes — repos indexed, commits fetched,
-deduplicated, and stored in ClickHouse. No manual polling, no cache warming.
+No code changes. No rebuilds. The container image is pulled from
+`ghcr.io/emiliano-go/vigil:latest` automatically.
 
-```python
+After startup the app:
+1. Waits for ClickHouse and Prefect to be healthy
+2. Runs schema migrations via `dbwarden`
+3. Backfills the `author_commit_days` table
+4. Starts the FastAPI server and begins syncing every 30 minutes
+
+```bash
+# Check health
+curl -s -H "X-API-Key: your-key" http://localhost:8000/health/ready
+
 # Trigger a sync on demand
-import requests
+curl -X POST -H "X-API-Key: your-key" http://localhost:8000/api/flow/run
 
-requests.post(
-    "https://vigil.example.com/api/flow/run",
-    headers={"X-API-Key": "your-key"},
-)
-# {"status": "queued", "detail": "Prefect flow queued"}
+# Start querying
+curl -H "X-API-Key: your-key" http://localhost:8000/api/stats/overview
 ```
 
 ---
 
-## Why vigil
+## Environment
 
-GitHub's contribution graph is a black box. vigil gives you the raw data
-behind it — every commit, every branch, every author — in your own ClickHouse
-instance, queryable with SQL and exposed through a REST API.
+All configuration is through environment variables in `.env`. Set them once
+and you are done.
+
+| Variable | Default | Required | Description |
+|---|---|---|---|
+| `CLICKHOUSE_USER` | `app` | | ClickHouse user |
+| `CLICKHOUSE_PASSWORD` | (none) | yes | ClickHouse password |
+| `CLICKHOUSE_DB` | `default` | | ClickHouse database |
+| `CLICKHOUSE_HOST` | `localhost` | | ClickHouse hostname |
+| `CLICKHOUSE_PORT` | `8123` | | ClickHouse HTTP port |
+| `CLICKHOUSE_NATIVE_PORT` | `9000` | | ClickHouse native port |
+| `GITHUB_TOKEN` | (none) | yes | Personal access token with `repo` scope |
+| `PREFECT_API_URL` | (none) | | Prefect server API URL (automatic in Compose) |
+| `ROOT_PATH` | (none) | | URL prefix when behind a reverse proxy, e.g. `/vigil` |
+| `API_KEY` | (none) | yes | Required on all requests via `X-API-Key` header |
+| `RATE_LIMIT` | `60/minute` | | Rate limit string for slowapi |
+| `AUTHOR_LOGIN_CANONICAL_MAP` | `{}` | | JSON alias map, e.g. `{"old-username":"current-username"}` |
+| `CONTRIBUTION_TIMEZONE_NAME` | `America/Montevideo` | | Timezone for hourly/weekly/streak reporting |
+
+---
+
+## API contract
+
+All endpoints require the `X-API-Key` header and count against the rate limit.
+
+### Overview
+
+```
+GET /api/stats/overview
+```
+
+```json
+{
+  "total_commits": 4800,
+  "total_repos": 24,
+  "total_authors": 3,
+  "busiest_day": {"period": "2026-03-15", "total": 47},
+  "most_active_repo": {"repo": "emiliano-go/vigil", "total": 1200}
+}
+```
+
+`total_commits` comes from GitHub contribution calendar (all-time, all repos).
+Everything else from ClickHouse.
+
+### Streak
+
+```
+GET /api/stats/streak/{author_login}
+```
+
+```json
+{
+  "author_login": "emiliano-go",
+  "current_streak": 45,
+  "longest_streak": 45,
+  "last_active_day": "2026-07-08",
+  "active_days": 321
+}
+```
+
+Source of truth is GitHub GraphQL contribution calendar.
+
+### Repos
+
+```
+GET /api/repos
+```
+
+```json
+[
+  {
+    "full_name": "emiliano-go/vigil",
+    "name": "vigil",
+    "owner": "emiliano-go",
+    "is_org": false,
+    "private": false,
+    "default_branch": "master"
+  }
+]
+```
+
+### Commits
+
+```
+GET /api/commits?repo=&author_login=&limit=100
+```
+
+All optional. `limit` defaults to 100, max 1000.
+
+```json
+[
+  {
+    "repo": "emiliano-go/vigil",
+    "sha": "abc123",
+    "author_login": "emiliano-go",
+    "author_name": "Emiliano Gandini Outeda",
+    "author_email": "emiliano.gandini@protonmail.com",
+    "message": "fix: handle edge case",
+    "is_merge": false,
+    "committed_at": "2026-07-08T14:30:00"
+  }
+]
+```
+
+### Daily stats
+
+```
+GET /api/stats/daily?repo=
+```
+
+Without `repo`: totals come from GitHub GraphQL contribution calendar (no `by_repo`).
+With `repo`: totals from ClickHouse with `by_repo` breakdown.
+
+```json
+{
+  "total": [
+    {"period": "2026-07-08", "total": 8}
+  ],
+  "by_repo": [
+    {"period": "2026-07-08", "repo": "emiliano-go/vigil", "total": 5}
+  ]
+}
+```
+
+```
+GET /api/stats/daily/{repo_full_name}
+```
+
+Shorthand for `?repo=`.
+
+### Daily author stats
+
+```
+GET /api/stats/daily/authors?days=7&author_login=
+```
+
+```json
+{
+  "total": [{"period": "2026-07-08", "total": 8}],
+  "by_author": [{"period": "2026-07-08", "author_login": "emiliano-go", "total": 8}]
+}
+```
+
+### Monthly / weekly / yearly
+
+```
+GET /api/stats/monthly?repo=
+GET /api/stats/monthly/{repo_full_name}
+GET /api/stats/weekly?repo=
+GET /api/stats/yearly?repo=
+```
+
+```json
+{
+  "total": [
+    {"period": "2026-07-01", "total": 128}
+  ],
+  "by_repo": [
+    {"period": "2026-07-01", "repo": "emiliano-go/vigil", "total": 40}
+  ]
+}
+```
+
+### Hourly
+
+```
+GET /api/stats/hourly?repo=
+GET /api/stats/hourly/{repo_full_name}
+```
+
+```json
+[
+  {"repo": "emiliano-go/vigil", "hour": 14, "total": 12}
+]
+```
+
+### Hourly by author
+
+```
+GET /api/stats/hourly/authors?author_login=...&repo=
+```
+
+Same shape as `/hourly`, filtered by author login.
+
+### Hourly range (per author)
+
+```
+GET /api/stats/hourly/authors/range?author_login=...&since=...&until=...&repo=
+```
+
+`sinc e` and `until` are ISO 8601. `[since, until)` semantics: aligned 24h
+windows return exactly 24 buckets. Partial-end buckets are included.
+
+```json
+[
+  {"period": "2026-07-07T00:00:00Z", "total": 0},
+  {"period": "2026-07-07T01:00:00Z", "total": 2}
+]
+```
+
+### Top repos
+
+```
+GET /api/stats/top-repos?limit=10&repo=
+```
+
+```json
+[
+  {"repo": "emiliano-go/vigil", "total": 1200}
+]
+```
+
+### Merge ratio
+
+```
+GET /api/stats/merge-ratio?repo=
+```
+
+```json
+{
+  "repo": null,
+  "total": 4200,
+  "merge_commits": 312,
+  "regular_commits": 3888,
+  "merge_ratio": 0.074
+}
+```
+
+### Activity range
+
+```
+GET /api/stats/activity-range?sinc e=...&until=...&repo=
+```
+
+Returns deduped commits (by `repo` + `sha`) in the time window.
+
+```json
+[
+  {
+    "repo": "emiliano-go/vigil",
+    "sha": "abc123",
+    "author_login": "emiliano-go",
+    "committed_at": "2026-07-08T14:30:00"
+  }
+]
+```
+
+### Authors
+
+```
+GET /api/stats/authors?repo=
+GET /api/stats/authors/{repo_full_name}
+```
+
+```json
+[
+  {"repo": "emiliano-go/vigil", "author_login": "emiliano-go", "total": 843}
+]
+```
+
+### Sync state (per repo)
+
+```
+GET /api/repos/{repo_full_name}/sync-state
+```
+
+```json
+{
+  "repo": "emiliano-go/vigil",
+  "last_synced_sha": "abc123",
+  "last_synced_at": "2026-07-08T14:30:00",
+  "last_run_status": "success",
+  "last_run_at": "2026-07-08T14:30:00"
+}
+```
+
+### Trigger sync
+
+```
+POST /api/flow/run
+```
+
+```json
+{
+  "status": "queued",
+  "detail": "Prefect flow queued"
+}
+```
+
+---
+
+## Running in production
+
+### With Traefik
+
+The `docker-compose.yml` does not publish any host ports. All services are on
+the `vigil_internal` bridge network. Point Traefik at the `app` service (port
+8000) and set `ROOT_PATH` if the service is behind a path prefix:
+
+```bash
+ROOT_PATH=/vigil
+```
+
+### Standalone
+
+```bash
+export GITHUB_TOKEN=ghp_...
+export API_KEY=secret
+export CLICKHOUSE_PASSWORD=...
+docker run -d --name clickhouse clickhouse/clickhouse-server:24.8
+docker run -d --name prefect prefecthq/prefect:3-latest prefect server start --host 0.0.0.0
+docker run -d --name vigil \
+  --env-file .env \
+  ghcr.io/emiliano-go/vigil:latest
+```
+
+### Health checks
+
+```
+GET /health/ready
+GET /health/alive
+GET /health/version
+```
+
+All require `X-API-Key`.
+
+---
+
+## Data sources
+
+| Field | Source | Why |
+|---|---|---|
+| `total_commits` in overview | GitHub GraphQL contribution calendar | Matches GitHub profile badge; survives username renames |
+| Streak (`current_streak`, `longest_streak`) | GitHub GraphQL contribution calendar | Missing days from old usernames not backfillable via commits API |
+| All other stats (daily, hourly, monthly, ...) | ClickHouse `uniqExact(sha)` | Branch duplicates removed; sub-second query times |
+| Commit rows | ClickHouse `commits` table | Deduped at fetch, insert, and sync-boundary; all branches included |
+
+Author aliasing via `AUTHOR_LOGIN_CANONICAL_MAP` is transparent at the SQL
+level: queries inject a `multiIf` expression so old logins are mapped to the
+canonical one without any code changes or data rewrites.
+
+---
+
+## Comparison: GitHub vs vigil
 
 | What | GitHub gives you | vigil gives you |
 |---|---|---|
@@ -71,201 +420,15 @@ instance, queryable with SQL and exposed through a REST API.
 | Hourly breakdown | Not available | `uniqExact(sha)` per hour |
 | Merge ratio | Manual counting | `/api/stats/merge-ratio` |
 | Sync cadence | Manual fetch | Every 30 min, Prefect orchestrated |
+| All stats in one call | No single endpoint | `GET /api/stats/overview` |
 
 ---
 
-## Features
+## What you do not need to do
 
-| Category | What vigil handles |
-|---|---|
-| **Ingestion** | GitHub REST API pagination, SHA dedup at fetch/insert/sync-boundary, branch cross-contamination prevention |
-| **Storage** | ClickHouse MergeTree — `commits`, `repos`, `sync_state`, `author_commit_days` with materialized views |
-| **Deduplication** | `uniqExact(sha)` on every stats endpoint — no duplicate commits across branches |
-| **Author aliasing** | `AUTHOR_LOGIN_CANONICAL_MAP` env var maps old usernames to current ones, with SQL-level `multiIf` |
-| **Orchestration** | Prefect 3.x flow runs every 30 min via FastAPI lifespan, configurable with env vars |
-| **REST API** | 20+ endpoints — repos, commits, daily/weekly/monthly/yearly stats, hourly breakdowns, top repos, merge ratio, overview, activity range, author streaks |
-| **Auth & rate limiting** | `X-API-Key` header + `slowapi` rate limiting on every public route |
-| **Streaks** | GitHub GraphQL source of truth for contribution streaks and daily calendars; ClickHouse derived table for fallback |
-| **Health & migrations** | `dbwarden` health router at `/health`, schema migrations at `/db` |
-| **Deployment** | Docker Compose (ClickHouse + Prefect server + app), GitHub Actions → GHCR, Traefik ingress ready |
-| **Timezone support** | `CONTRIBUTION_TIMEZONE_NAME` configures local-time reporting across all endpoints |
-
----
-
-## At a glance
-
-```python
-# Overview — total commits from GitHub GraphQL, rest from ClickHouse
-GET /api/stats/overview
-# {
-#   "total_commits": 4800,       # GitHub contribution count
-#   "total_repos": 24,
-#   "total_authors": 3,
-#   "busiest_day": {"period": "2026-03-15", "total": 47},
-#   "most_active_repo": {"repo": "emiliano-go/vigil", "total": 1200}
-# }
-
-# Streak — source of truth is GitHub GraphQL
-GET /api/stats/streak/emiliano-go
-# {
-#   "current_streak": 45,
-#   "longest_streak": 45,
-#   "last_active_day": "2026-07-08",
-#   "active_days": 321
-# }
-
-# Hourly breakdown for a specific author and window
-GET /api/stats/hourly/authors/range?author_login=emiliano-go&since=2026-07-07T00:00:00Z&until=2026-07-08T00:00:00Z
-# Returns exactly 24 buckets, [since, until) semantics
-
-# Hourly activity per repo
-GET /api/stats/hourly
-# [{"repo": "vigil", "hour": 14, "total": 12}, ...]
-
-# Daily stats — uses GitHub GraphQL when no repo filter, else ClickHouse
-GET /api/stats/daily
-# {"total": [{"period": "2026-07-08", "total": 8}, ...], "by_repo": [...]}
-
-# Weekly / monthly / yearly aggregated
-GET /api/stats/weekly
-GET /api/stats/monthly
-GET /api/stats/yearly
-
-# Merge ratio
-GET /api/stats/merge-ratio
-# {"total": 4200, "merge_commits": 312, "regular_commits": 3888, "merge_ratio": 0.074}
-
-# Top repos by commit count
-GET /api/stats/top-repos?limit=5
-
-# Activity range with deduped commits
-GET /api/stats/activity-range?since=2026-07-01T00:00:00Z&until=2026-07-08T00:00:00Z
-
-# Author stats per repo
-GET /api/stats/authors
-# [{"repo": "vigil", "author_login": "emiliano-go", "total": 843}, ...]
-
-# List commits with optional filters
-GET /api/commits?repo=vigil&author_login=emiliano-go&limit=50
-
-# Trigger sync
-POST /api/flow/run
-```
-
-All endpoints require `X-API-Key` header. Rate limit is configurable via
-`RATE_LIMIT` env var (default `60/minute`).
-
----
-
-## Installation
-
-```bash
-# Clone
-git clone https://github.com/emiliano-go/vigil.git
-cd vigil
-
-# Copy and edit environment
-cp .env.example .env
-
-# Start everything
-docker compose up -d
-```
-
-The stack starts three services:
-
-| Service | Image | Purpose |
-|---|---|---|
-| `clickhouse` | `clickhouse/clickhouse-server:24.8` | Commit storage, materialized views, aggregations |
-| `prefect-server` | `prefecthq/prefect:3-latest` | Flow orchestration, task scheduling |
-| `app` | `ghcr.io/emiliano-go/vigil:latest` | FastAPI REST API, sync scheduler, migrations |
-
-The app automatically:
-1. Waits for ClickHouse and Prefect to be healthy
-2. Runs `dbwarden migrate` for schema creation
-3. Backfills the `author_commit_days` derived table
-4. Starts the FastAPI server and begins the 30-minute sync loop
-
-### Environment
-
-| Variable | Default | Description |
-|---|---|---|
-| `CLICKHOUSE_USER` | `app` | ClickHouse user |
-| `CLICKHOUSE_PASSWORD` | — | ClickHouse password |
-| `CLICKHOUSE_DB` | `default` | ClickHouse database |
-| `CLICKHOUSE_HOST` | `localhost` | ClickHouse hostname |
-| `CLICKHOUSE_PORT` | `8123` | ClickHouse HTTP port |
-| `CLICKHOUSE_NATIVE_PORT` | `9000` | ClickHouse native port |
-| `GITHUB_TOKEN` | — | Personal access token with `repo` scope |
-| `PREFECT_API_URL` | — | Prefect server API URL |
-| `ROOT_PATH` | — | URL prefix when behind a reverse proxy |
-| `API_KEY` | — | Required on all requests via `X-API-Key` |
-| `RATE_LIMIT` | `60/minute` | Rate limit string for slowapi |
-| `AUTHOR_LOGIN_CANONICAL_MAP` | `{}` | JSON alias map, e.g. `{"old":"new"}` |
-| `CONTRIBUTION_TIMEZONE_NAME` | `America/Montevideo` | Timezone for hourly/weekly reporting |
-
----
-
-## Framework support
-
-| Environment | Integration |
-|---|---|
-| **Docker Compose** | `docker compose up -d` — ClickHouse, Prefect, and app pre-wired |
-| **Traefik** | Set `ROOT_PATH` for path-prefixed routing, no host port publishing needed |
-| **GitHub Actions** | Push to `master` triggers GHCR build + deploy via `deploy.yml` |
-| **Standalone** | Run `uvicorn app.main:app` after starting ClickHouse and Prefect manually |
-
----
-
-## Testing
-
-Run the test suite (no external services needed for unit tests):
-
-```bash
-uv sync --frozen
-uv run pytest --cov=app tests/
-```
-
-### What is tested
-
-| Test file | What it verifies |
-|---|---|
-| `test_hourly_range.py` | Exactly 24 buckets for aligned 24h windows, partial-end bucket behavior |
-| `test_streak_route.py` | Delegates to GitHub GraphQL helper, canonical login applied |
-| `test_overview_totals.py` | `total_commits` sourced from GitHub contributions, not ClickHouse |
-| `test_distinct_stats_queries.py` | All endpoints use `uniqExact(sha)`, no aggregate-table queries |
-| `test_ingestion_dedupe.py` | Fetch dedupes SHAs, stops at `last_synced_sha`, activity-range dedupes |
-| `test_flow_boundary.py` | `process_repo` passes `last_synced_sha` to `fetch_commits` |
-
----
-
-## Architecture
-
-```
-GitHub API ──► Prefect Flow ──► ClickHouse ──► FastAPI ──► Client
-                  │                                  │
-               sync_state                        X-API-Key
-              (per repo SHA)                    + rate limit
-```
-
-- **Ingestion**: `vigil_sync()` indexes all repos, then maps `process_repo` per
-  repo via Prefect. Each repo task fetches commits since last sync, dedupes
-  against stored SHAs, inserts into ClickHouse.
-- **Deduplication**: Three layers — `fetch_commits` stops at `last_synced_sha`
-  and dedupes within response; `insert_commits` dedupes `(repo, sha)` in batch;
-  `process_repo` filters against existing SHAs.
-- **Stats**: All `uniqExact(sha)` queries on the raw `commits` table — no
-  aggregate tables queried by the API (except `author_commit_days` for streak
-  fallback). Overview `total_commits` and streaks come from GitHub GraphQL.
-- **Aliasing**: `AUTHOR_LOGIN_CANONICAL_MAP` is injected as a ClickHouse
-  `multiIf` expression so all queries transparently map old logins to the
-  canonical one.
-
----
-
-## Documentation
-
-- [API routes](app/api/routes.py) — all 20+ endpoints with Pydantic schemas
-- [Configuration](app/core/config.py) — env vars, login map, timezone
-- [Flow tasks](app/flow/tasks.py) — fetch, insert, sync state
-- [GitHub contributions](app/services/github_contributions.py) — GraphQL streak/calendar helpers
-- [ClickHouse migrations](migrations/clickhouse/) — schema-as-code via dbwarden
+- Fork, patch, or rebuild the container image. Everything comes from GHCR.
+- Hand-edit database schemas. Migrations run automatically on startup.
+- Rotate API keys in the code. Set `API_KEY` in `.env`.
+- Handle username renames in queries. Set `AUTHOR_LOGIN_CANONICAL_MAP` once.
+- Worry about duplicate commits. Dedup happens at every layer.
+- Set up cron. The 30-minute sync loop is built into the app process.
