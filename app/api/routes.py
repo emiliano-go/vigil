@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -153,6 +153,37 @@ def _query_dicts(sql: str, parameters: dict | None = None):
         return [dict(zip(columns, row)) for row in result.result_rows]
     finally:
         client.close()
+
+
+def _to_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def _hourly_range_from_rows(rows: list[dict], since: datetime, until: datetime) -> list[HourlyTotalOut]:
+    start_hour = _to_utc(since).replace(minute=0, second=0, microsecond=0)
+    end_utc = _to_utc(until)
+    end_hour = end_utc.replace(minute=0, second=0, microsecond=0)
+    if end_utc != end_hour:
+        end_hour += timedelta(hours=1)
+
+    totals: dict[datetime, int] = {}
+    for row in rows:
+        period = row["period"]
+        if period.tzinfo is None:
+            period = period.replace(tzinfo=timezone.utc)
+        else:
+            period = period.astimezone(timezone.utc)
+        totals[period.replace(minute=0, second=0, microsecond=0)] = int(row["total"])
+
+    result: list[HourlyTotalOut] = []
+    current = start_hour
+    while current < end_hour:
+        result.append(HourlyTotalOut(period=current, total=totals.get(current, 0)))
+        current += timedelta(hours=1)
+
+    return result
 
 
 @router.get("/")
@@ -335,8 +366,17 @@ def hourly_stats_for_author_range(
     if since > until:
         raise HTTPException(status_code=400, detail="since must be before until")
 
-    clauses: list[str] = ["committed_at >= %(since)s", "committed_at <= %(until)s"]
-    params: dict[str, datetime | str] = {"since": since, "until": until}
+    since_utc = _to_utc(since)
+    until_utc = _to_utc(until)
+    if until_utc.minute or until_utc.second or until_utc.microsecond:
+        until_utc = until_utc.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    else:
+        until_utc = until_utc.replace(minute=0, second=0, microsecond=0)
+
+    since_utc = since_utc.replace(minute=0, second=0, microsecond=0)
+
+    clauses: list[str] = ["committed_at >= %(since)s", "committed_at < %(until)s"]
+    params: dict[str, datetime | str] = {"since": since_utc, "until": until_utc}
 
     if repo:
         clauses.append("repo = %(repo)s")
@@ -349,32 +389,10 @@ def hourly_stats_for_author_range(
 
     where = f"WHERE {' AND '.join(clauses)}"
     rows = _query_dicts(
-        f"SELECT committed_at FROM commits {where} ORDER BY committed_at",
+        f"SELECT toStartOfHour(committed_at) AS period, count() AS total FROM commits {where} GROUP BY period ORDER BY period",
         params,
     )
-
-    start_hour = since.replace(minute=0, second=0, microsecond=0)
-    end_hour = until.replace(minute=0, second=0, microsecond=0)
-    if start_hour.tzinfo is None:
-        start_hour = start_hour.replace(tzinfo=since.tzinfo)
-    if end_hour.tzinfo is None:
-        end_hour = end_hour.replace(tzinfo=until.tzinfo)
-
-    totals: dict[datetime, int] = {}
-    for row in rows:
-        committed_at = row["committed_at"]
-        if committed_at.tzinfo is None:
-            committed_at = committed_at.replace(tzinfo=since.tzinfo)
-        hour = committed_at.replace(minute=0, second=0, microsecond=0)
-        totals[hour] = totals.get(hour, 0) + 1
-
-    result: list[HourlyTotalOut] = []
-    current = start_hour
-    while current <= end_hour:
-        result.append(HourlyTotalOut(period=current, total=totals.get(current, 0)))
-        current += timedelta(hours=1)
-
-    return result
+    return _hourly_range_from_rows(rows, since_utc, until_utc)
 
 
 @router.get("/stats/hourly/{repo_full_name:path}", response_model=list[HourlyActivityOut])
