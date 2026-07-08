@@ -29,6 +29,46 @@
 
 ---
 
+## What's vigil?
+
+vigil is a self-hosted service that tracks your GitHub activity in real time.
+It polls the GitHub REST API every 30 minutes, indexes all your repositories,
+fetches every commit across every branch, and stores the data in ClickHouse.
+
+The result is a REST API that gives you:
+
+- Your total commit count across all repos, matching your GitHub profile
+- Your contribution streak (current and longest)
+- Daily, weekly, monthly, and yearly commit totals
+- Hourly activity breakdowns by repo and author
+- Merge ratio, top repos, and per-author stats
+- Full commit history with deduplication across branches
+
+Behind the scenes, vigil runs three services:
+
+| Service | What it does |
+|---|---|
+| **ClickHouse** | Columnar database. Stores commits, repos, sync state, and derived tables. All queries run in milliseconds. |
+| **Prefect server** | Orchestrates the sync flow. Every 30 minutes it fans out one task per repo to fetch new commits. |
+| **App** | FastAPI server. Hosts the REST API, runs the sync scheduler on startup, and applies schema migrations automatically. |
+
+The sync is incremental: each repo tracks its last synced SHA, so every run
+only fetches what's new. Commits that appear on multiple branches are
+deduplicated by SHA at the fetch, insert, and query layers.
+
+```mermaid
+graph LR
+  GitHub -->|REST API| Prefect
+  Prefect -->|inserts rows| ClickHouse
+  ClickHouse -->|queried by| FastAPI
+  FastAPI -->|REST API| You
+```
+
+No data leaves your infrastructure. The GitHub token, ClickHouse password, and
+API key stay in your `.env` file.
+
+---
+
 ## Quick start
 
 ```bash
