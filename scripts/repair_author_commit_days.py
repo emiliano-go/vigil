@@ -10,7 +10,11 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
+_source_file = globals().get("__file__")
+if _source_file and _source_file not in {"-", "<stdin>"}:
+    ROOT = Path(_source_file).resolve().parents[1]
+else:
+    ROOT = Path("/app") if os.getenv("VIGIL_IN_CONTAINER") == "1" else Path.cwd()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

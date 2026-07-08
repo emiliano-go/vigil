@@ -253,11 +253,11 @@ def daily_stats(repo: str | None = None):
 
     where, params = _stats_where(repo)
     totals = _query_dicts(
-        f"SELECT day AS period, sum(total) AS total FROM commits_per_day {where} GROUP BY day ORDER BY period DESC",
+        f"SELECT toDate(committed_at) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
         params or None,
     )
     by_repo = _query_dicts(
-        f"SELECT day AS period, repo, total FROM commits_per_day {where} ORDER BY period DESC, repo",
+        f"SELECT toDate(committed_at) AS period, repo, uniqExact(sha) AS total FROM commits {where} GROUP BY repo, period ORDER BY period DESC, repo",
         params or None,
     )
     return DailyStatsOut(
@@ -274,18 +274,18 @@ def daily_stats_for_repo(repo_full_name: str):
 @router.get("/stats/daily/authors", response_model=DailyAuthorStatsOut)
 def daily_author_stats(days: int = Query(default=7, ge=1, le=365), author_login: str | None = None):
     params: dict[str, int | str] = {"days": days}
-    where = "WHERE day >= today() - %(days)s"
+    where = "WHERE toDate(committed_at) >= today() - %(days)s"
     author_filter, author_params = _author_login_filter(author_login)
     if author_filter:
         where += f" AND {author_filter.removeprefix('WHERE ')}"
         params.update(author_params)
 
     totals = _query_dicts(
-        f"SELECT day AS period, sum(total) AS total FROM author_commit_days {where} GROUP BY day ORDER BY period DESC",
+        f"SELECT toDate(committed_at) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
         params,
     )
     by_author = _query_dicts(
-        f"SELECT day AS period, {settings.canonical_author_login_expr()} AS author_login, sum(total) AS total FROM author_commit_days {where} GROUP BY period, author_login ORDER BY period DESC, author_login",
+        f"SELECT toDate(committed_at) AS period, {settings.canonical_author_login_expr()} AS author_login, uniqExact(sha) AS total FROM commits {where} GROUP BY period, author_login ORDER BY period DESC, author_login",
         params,
     )
     return DailyAuthorStatsOut(
@@ -298,11 +298,11 @@ def daily_author_stats(days: int = Query(default=7, ge=1, le=365), author_login:
 def monthly_stats(repo: str | None = None):
     where, params = _stats_where(repo)
     totals = _query_dicts(
-        f"SELECT month AS period, sum(total) AS total FROM commits_per_month {where} GROUP BY month ORDER BY period DESC",
+        f"SELECT toStartOfMonth(committed_at) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
         params or None,
     )
     by_repo = _query_dicts(
-        f"SELECT month AS period, repo, total FROM commits_per_month {where} ORDER BY period DESC, repo",
+        f"SELECT toStartOfMonth(committed_at) AS period, repo, uniqExact(sha) AS total FROM commits {where} GROUP BY repo, period ORDER BY period DESC, repo",
         params or None,
     )
     return MonthlyStatsOut(
@@ -320,7 +320,7 @@ def monthly_stats_for_repo(repo_full_name: str):
 def author_stats(repo: str | None = None):
     where, params = _stats_where(repo)
     rows = _query_dicts(
-        f"SELECT repo, {settings.canonical_author_login_expr()} AS author_login, sum(total) AS total FROM author_commit_counts {where} GROUP BY repo, author_login ORDER BY total DESC, repo, author_login",
+        f"SELECT repo, {settings.canonical_author_login_expr()} AS author_login, uniqExact(sha) AS total FROM commits {where} GROUP BY repo, author_login ORDER BY total DESC, repo, author_login",
         params or None,
     )
     return [AuthorCommitCountOut.model_validate(row) for row in rows]
@@ -335,7 +335,7 @@ def author_stats_for_repo(repo_full_name: str):
 def hourly_stats(repo: str | None = None):
     where, params = _stats_where(repo)
     rows = _query_dicts(
-        f"SELECT repo, hour, total FROM hourly_activity {where} ORDER BY repo, hour",
+        f"SELECT repo, toHour(committed_at) AS hour, uniqExact(sha) AS total FROM commits {where} GROUP BY repo, hour ORDER BY repo, hour",
         params or None,
     )
     return [HourlyActivityOut.model_validate(row) for row in rows]
@@ -350,7 +350,7 @@ def hourly_stats_for_author(author_login: str = Query(..., min_length=1), repo: 
         params.update(author_params)
 
     rows = _query_dicts(
-        f"SELECT repo, toHour(committed_at) AS hour, count() AS total FROM commits {where} GROUP BY repo, hour ORDER BY repo, hour",
+        f"SELECT repo, toHour(committed_at) AS hour, uniqExact(sha) AS total FROM commits {where} GROUP BY repo, hour ORDER BY repo, hour",
         params or None,
     )
     return [HourlyActivityOut.model_validate(row) for row in rows]
@@ -389,7 +389,7 @@ def hourly_stats_for_author_range(
 
     where = f"WHERE {' AND '.join(clauses)}"
     rows = _query_dicts(
-        f"SELECT toStartOfHour(committed_at) AS period, count() AS total FROM commits {where} GROUP BY period ORDER BY period",
+        f"SELECT toStartOfHour(committed_at) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period",
         params,
     )
     return _hourly_range_from_rows(rows, since_utc, until_utc)
@@ -404,11 +404,11 @@ def hourly_stats_for_repo(repo_full_name: str):
 def weekly_stats(repo: str | None = None):
     where, params = _stats_where(repo)
     totals = _query_dicts(
-        f"SELECT toStartOfWeek(committed_at) AS period, count() AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
+        f"SELECT toStartOfWeek(committed_at) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
         params or None,
     )
     by_repo = _query_dicts(
-        f"SELECT toStartOfWeek(committed_at) AS period, repo, count() AS total FROM commits {where} GROUP BY repo, period ORDER BY period DESC, repo",
+        f"SELECT toStartOfWeek(committed_at) AS period, repo, uniqExact(sha) AS total FROM commits {where} GROUP BY repo, period ORDER BY period DESC, repo",
         params or None,
     )
     return DailyStatsOut(
@@ -421,11 +421,11 @@ def weekly_stats(repo: str | None = None):
 def yearly_stats(repo: str | None = None):
     where, params = _stats_where(repo)
     totals = _query_dicts(
-        f"SELECT toStartOfYear(committed_at) AS period, count() AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
+        f"SELECT toStartOfYear(committed_at) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
         params or None,
     )
     by_repo = _query_dicts(
-        f"SELECT toStartOfYear(committed_at) AS period, repo, count() AS total FROM commits {where} GROUP BY repo, period ORDER BY period DESC, repo",
+        f"SELECT toStartOfYear(committed_at) AS period, repo, uniqExact(sha) AS total FROM commits {where} GROUP BY repo, period ORDER BY period DESC, repo",
         params or None,
     )
     return MonthlyStatsOut(
@@ -438,7 +438,7 @@ def yearly_stats(repo: str | None = None):
 def top_repos(limit: int = Query(default=10, ge=1, le=100), repo: str | None = None):
     where, params = _stats_where(repo)
     rows = _query_dicts(
-        f"SELECT repo, count() AS total FROM commits {where} GROUP BY repo ORDER BY total DESC, repo LIMIT {limit}",
+        f"SELECT repo, uniqExact(sha) AS total FROM commits {where} GROUP BY repo ORDER BY total DESC, repo LIMIT {limit}",
         params or None,
     )
     return [RepoTotalOut.model_validate(row) for row in rows]
@@ -448,7 +448,7 @@ def top_repos(limit: int = Query(default=10, ge=1, le=100), repo: str | None = N
 def merge_ratio(repo: str | None = None):
     where, params = _stats_where(repo)
     rows = _query_dicts(
-        f"SELECT count() AS total, countIf(is_merge) AS merge_commits, countIf(NOT is_merge) AS regular_commits FROM commits {where}",
+        f"SELECT uniqExact(sha) AS total, uniqExactIf(sha, is_merge) AS merge_commits, uniqExactIf(sha, NOT is_merge) AS regular_commits FROM commits {where}",
         params or None,
     )
     row = rows[0] if rows else {"total": 0, "merge_commits": 0, "regular_commits": 0}
@@ -473,10 +473,10 @@ def overview_stats():
     )
     repos = _query_dicts("SELECT count() AS total_repos FROM repos")
     busiest_day = _query_dicts(
-        "SELECT day AS period, sum(total) AS total FROM commits_per_day GROUP BY day ORDER BY total DESC, period DESC LIMIT 1"
+        "SELECT toDate(committed_at) AS period, uniqExact(sha) AS total FROM commits GROUP BY period ORDER BY total DESC, period DESC LIMIT 1"
     )
     most_active_repo = _query_dicts(
-        "SELECT repo, count() AS total FROM commits GROUP BY repo ORDER BY total DESC, repo LIMIT 1"
+        "SELECT repo, uniqExact(sha) AS total FROM commits GROUP BY repo ORDER BY total DESC, repo LIMIT 1"
     )
 
     total_commits = total_commits_row[0] if total_commits_row else {"total_commits": 0}
