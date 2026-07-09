@@ -373,19 +373,20 @@ def daily_stats(repo: str | None = None):
 
 @router.get("/stats/daily/authors", response_model=DailyAuthorStatsOut)
 def daily_author_stats(days: int = Query(default=7, ge=1, le=365), author_login: str | None = None):
-    params: dict[str, int | str] = {"days": days}
-    where = "WHERE toDate(committed_at) >= today() - %(days)s"
+    tz = settings.contribution_timezone_name
+    params: dict[str, int | str] = {"days": days, "tz": tz}
+    where = "WHERE toDate(committed_at, %(tz)s) >= today(%(tz)s) - %(days)s"
     author_filter, author_params = _author_login_filter(author_login)
     if author_filter:
         where += f" AND {author_filter.removeprefix('WHERE ')}"
         params.update(author_params)
 
     totals = _query_dicts(
-        f"SELECT toDate(committed_at) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
+        f"SELECT toDate(committed_at, %(tz)s) AS period, uniqExact(sha) AS total FROM commits {where} GROUP BY period ORDER BY period DESC",
         params,
     )
     by_author = _query_dicts(
-        f"SELECT toDate(committed_at) AS period, {settings.canonical_author_login_expr()} AS author_login, uniqExact(sha) AS total FROM commits {where} GROUP BY period, author_login ORDER BY period DESC, author_login",
+        f"SELECT toDate(committed_at, %(tz)s) AS period, {settings.canonical_author_login_expr()} AS author_login, uniqExact(sha) AS total FROM commits {where} GROUP BY period, author_login ORDER BY period DESC, author_login",
         params,
     )
     return DailyAuthorStatsOut(
