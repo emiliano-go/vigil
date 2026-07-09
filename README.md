@@ -199,23 +199,6 @@ curl -H "X-API-Key: your-key" "http://localhost:8000/api/commits?repo=owner/repo
 curl -X POST -H "X-API-Key: your-key" http://localhost:8000/api/flow/run
 ```
 
-## Running in production
-
-### With Traefik
-
-No host ports are published. All services are on the `vigil_internal` bridge network. Point Traefik at the `app` service (port 8000). Set `ROOT_PATH` for path-prefixed routing.
-
-### Standalone
-
-```bash
-export GITHUB_TOKEN=ghp_...
-export API_KEY=secret
-export CLICKHOUSE_PASSWORD=...
-docker run -d --name clickhouse clickhouse/clickhouse-server:24.8
-docker run -d --name prefect prefecthq/prefect:3-latest prefect server start --host 0.0.0.0
-docker run -d --name vigil --env-file .env ghcr.io/emiliano-go/vigil:latest
-```
-
 ### Health
 
 ```
