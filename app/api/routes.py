@@ -375,7 +375,7 @@ def daily_stats(repo: str | None = None):
 def daily_author_stats(days: int = Query(default=7, ge=1, le=365), author_login: str | None = None):
     tz = settings.contribution_timezone_name
     params: dict[str, int | str] = {"days": days}
-    where = f"WHERE toDate(committed_at, '{tz}') >= today('{tz}') - %(days)s"
+    where = f"WHERE toDate(committed_at, '{tz}') >= toDate(now('{tz}')) - %(days)s"
     author_filter, author_params = _author_login_filter(author_login)
     if author_filter:
         where += f" AND {author_filter.removeprefix('WHERE ')}"
