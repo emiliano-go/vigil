@@ -20,6 +20,21 @@
 
 ---
 
+## What is vigil?
+
+vigil is a self-hosted service that syncs your GitHub activity into a
+ClickHouse database and exposes it through a REST API. Every 30 minutes it
+indexes all your repos, fetches every commit across every branch, deduplicates
+them, and stores the data. No data leaves your infrastructure.
+
+It gives you contribution streaks, daily/weekly/monthly/hourly commit
+breakdowns, merge ratios, per-author stats, and the full commit history.
+Everything is queryable through a single API key.
+
+Three services run under the hood: ClickHouse (storage), Prefect server
+(orchestration), and the FastAPI app (API + scheduler). The docker-compose.yml
+below wires them together.
+
 ## Setup
 
 Create two files in the same directory:
