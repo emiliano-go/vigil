@@ -3,7 +3,8 @@ from contextlib import asynccontextmanager
 import logging
 from contextlib import suppress
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import RedirectResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -51,12 +52,16 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(api_router)
 app.include_router(
-    DBWardenHealthRouter(auth_mode="authenticated", api_key=settings.api_key),
+    DBWardenHealthRouter(auth_mode="open"),
     prefix="/health",
-    dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
 )
 app.include_router(
     DBWardenRouter(auth_mode="authenticated", api_key=settings.api_key),
     prefix="/db",
     dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
 )
+
+
+@app.get("/", include_in_schema=False)
+async def root_redirect(request: Request) -> RedirectResponse:
+    return RedirectResponse(f"{request.scope.get('root_path') or ''}/health")
